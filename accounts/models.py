@@ -92,38 +92,47 @@ class PickupPoint(models.Model):
 class Order(models.Model):
     STATUS_CHOICES = [
         ('placed', 'Оформлен'),
-        ('shipped', 'Отправлен'),
-        ('delivered', 'Доставлен'),
-        ('cancelled', 'Отменен'),
+        ('on assembly', 'На сборке'),
+        ('on the way', 'В пути'),
+        ('ready for pickup', 'Готов к выдаче'),
+        ('handed over to the courier', 'Передан курьеру'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Пользователь
-    delivery_address = models.TextField()  # Адрес доставки
-    products = models.ManyToManyField(Product, through='OrderProduct')  # Связь с продуктами через промежуточную модель
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)  # Общая стоимость
-    order_date = models.DateTimeField(default=timezone.now)  # Дата оформления
-    card_number = models.CharField(max_length=19)  # Номер карты
-    card_expiry_date = models.CharField(max_length=5)  # Срок действия карты
-    cardholder_name = models.CharField(max_length=100)  # Имя держателя карты
-    cvv = models.CharField(max_length=3, verbose_name="CVV")  # CVV
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='placed')  # Статус заказа
+    order_number = models.CharField(max_length=20, unique=True, blank=True, null=True)  # Новый номер заказа
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    delivery_address = models.TextField()
+    products = models.ManyToManyField(Product, through='OrderProduct')
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    order_date = models.DateTimeField(default=timezone.now)
+    card_number = models.CharField(max_length=19)
+    card_expiry_date = models.CharField(max_length=5)
+    cardholder_name = models.CharField(max_length=100)
+    cvv = models.CharField(max_length=3, verbose_name="CVV")
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='placed')
 
     def __str__(self):
-        return f"Заказ {self.id} от {self.user.username}"
+        return f"Заказ {self.order_number or self.id} от {self.user.username}"
 
     def save(self, *args, **kwargs):
-        # Шифрование номера карты и CVV
+        # Шифрование
         self.card_number = self.encrypt_card(self.card_number)
         self.cvv = self.encrypt_cvv(self.cvv)
+
+        # Генерация номера заказа при первом сохранении
+        if not self.order_number:
+            last_order = Order.objects.order_by('-id').first()
+            next_number = last_order.id + 1 if last_order else 1
+            self.order_number = f"№{next_number:06d}"
+
         super().save(*args, **kwargs)
 
     def encrypt_card(self, card_data):
-        # Простое шифрование номера карты
         return "**** **** **** " + card_data[-4:]
 
     def encrypt_cvv(self, cvv_data):
-        # Простейшее шифрование CVV, скрываем все символы, кроме последних
         return "****"
+
     
 
 class OrderProduct(models.Model):
