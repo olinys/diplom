@@ -320,3 +320,8 @@ def delete_pickup_point(request, pk):
     pickup_point = get_object_or_404(PickupPoint, pk=pk)
     pickup_point.delete()
     return redirect('add_pickup_point')
+
+# ПРЕДСТВЛЕНИЕ ТОВАРА
+def product_detail(request, product_id):
+    product = get_object_or_404(Product, pk=product_id)
+    return render(request, 'product_detail.html', {'product': product})

@@ -1,72 +1,20 @@
 <div class="col-md-4 mb-4">
-    <div class="card">
-        {% if product.image %}
-        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}"
-             style="object-fit: cover; height: 200px;">
-        {% else %}
-        <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="No Image Available"
-             style="object-fit: cover; height: 200px;">
-        {% endif %}
-        <div class="card-body">
-            <h5 class="card-title">{{ product.name }}</h5>
-            <p class="card-text">Цена: {{ product.price }} руб.</p>
-            <p class="card-text">Категория: {{ product.category.name }}</p>
-            <p class="card-text">Артикул: {{ product.sku }}</p>
-            <p class="card-text">В наличии: {{ product.stock_quantity }} шт.</p>
-            <a href="#" class="btn btn-primary" data-bs-toggle="modal"
-               data-bs-target="#productModal{{ product.id }}">Подробнее</a>
-
-            {% if user.is_superuser %}
-            <a href="{% url 'edit_product' product.id %}" class="btn btn-warning">Редактировать</a>
-            <a href="{% url 'delete_product' product.id %}" class="btn btn-danger">Удалить</a>
+    <a href="{% url 'product_detail' product.id %}" class="text-decoration-none text-dark">
+        <div class="card h-100">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}"
+                 style="object-fit: cover; height: 200px;">
             {% else %}
-                {% if user.is_authenticated %}
-                    <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success">Добавить в корзину</a>
-                    <a href="{% url 'checkout' %}" class="btn btn-outline-primary">Купить</a>
-                {% else %}
-                    <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-success">Добавить в корзину</a>
-                    <a href="{% url 'login' %}?next={% url 'checkout' %}" class="btn btn-outline-primary">Купить</a>
-                {% endif %}
+            <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="No Image Available"
+                 style="object-fit: cover; height: 200px;">
             {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Модальное окно -->
-<div class="modal fade" id="productModal{{ product.id }}" tabindex="-1"
-     aria-labelledby="productModalLabel{{ product.id }}" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="productModalLabel{{ product.id }}">{{ product.name }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <img src="{{ product.image.url }}" class="img-fluid mb-3" alt="{{ product.name }}">
-                <p><strong>Цена:</strong> {{ product.price }} руб.</p>
-                <p><strong>Категория:</strong> {{ product.category.name }}</p>
-                <p><strong>Описание:</strong> {{ product.description }}</p>
-                <p><strong>Параметр 1:</strong> {{ product.parameter_1 }}</p>
-                <p><strong>Параметр 2:</strong> {{ product.parameter_2 }}</p>
-                <p><strong>Параметр 3:</strong> {{ product.parameter_3 }}</p>
-                <p><strong>Параметр 4:</strong> {{ product.parameter_4 }}</p>
-                <p><strong>Параметр 5:</strong> {{ product.parameter_5 }}</p>
-                <p><strong>Артикул:</strong> {{ product.sku }}</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                {% if user.is_superuser %}
-                <a href="{% url 'edit_product' product.id %}" class="btn btn-warning">Редактировать</a>
-                <a href="{% url 'delete_product' product.id %}" class="btn btn-danger">Удалить</a>
-                {% else %}
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'add_to_cart' product.id %}" class="btn btn-primary">Добавить в корзину</a>
-                    {% else %}
-                        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary">Добавить в корзину</a>
-                    {% endif %}
-                {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ product.name }}</h5>
+                <p class="card-text">Цена: {{ product.price }} руб.</p>
+                <p class="card-text">Категория: {{ product.category.name }}</p>
+                <p class="card-text">Артикул: {{ product.sku }}</p>
+                <p class="card-text">В наличии: {{ product.stock_quantity }} шт.</p>
             </div>
         </div>
-    </div>
+    </a>
 </div>
