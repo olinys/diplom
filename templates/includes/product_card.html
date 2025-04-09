@@ -1,6 +1,6 @@
 <div class="col-md-4 mb-4">
     <a href="{% url 'product_detail' product.id %}" class="text-decoration-none text-dark">
-        <div class="card h-100">
+        <div class="card">
             {% if product.image %}
             <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}"
                  style="object-fit: cover; height: 200px;">
