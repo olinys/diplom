@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}Оформление заказа{% endblock %}
+
+{% block content %}
+<div class="card shadow p-4">
+    <h2 class="mb-4">Оформление заказа</h2>
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Способ получения -->
+        <h4>Способ получения:</h4>
+        <div class="mb-3">
+            <select id="delivery_method" name="delivery_method" class="form-select" onchange="toggleDeliveryOptions()">
+                <option value="pickup">Самовывоз</option>
+                <option value="pvz">Пункт выдачи</option>
+                <option value="delivery">Доставка</option>
+            </select>
+        </div>
+
+        <!-- Адрес самовывоза -->
+        <div id="pickup_address" class="delivery-option mb-3">
+            <div class="alert alert-secondary">
+                <i class="bi bi-geo-alt-fill"></i>
+                <strong>Адрес самовывоза:</strong> г. Москва, ул. Примерная, д. 1
+            </div>
+        </div>
+
+        <!-- Выбор ПВЗ -->
+        <div id="pvz_select" class="delivery-option mb-3" style="display: none;">
+            <label for="pvz_point" class="form-label">Выберите ПВЗ:</label>
+            <select id="pvz_point" name="pvz_point" class="form-select">
+                {% for point in pickup_points %}
+                    <option value="{{ point.id }}">{{ point.address }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Адрес доставки -->
+        <div id="delivery_address" class="delivery-option mb-3" style="display: none;">
+            <div class="alert alert-secondary">
+                <i class="bi bi-house-door-fill"></i>
+                <strong>Ваш адрес доставки:</strong> {{ user_profile.delivery_address }}
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Оплата -->
+        <h4>Оплата картой</h4>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="card_number" class="form-label">Номер карты</label>
+                <input type="text" class="form-control" id="card_number" name="card_number" placeholder="0000 0000 0000 0000" required>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="expiry_date" class="form-label">Срок действия</label>
+                <input type="text" class="form-control" id="expiry_date" name="expiry_date" placeholder="MM/YY" required>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="cvv" class="form-label">CVV</label>
+                <input type="password" class="form-control" id="cvv" name="cvv" required>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="cardholder_name" class="form-label">Имя держателя карты</label>
+            <input type="text" class="form-control" id="cardholder_name" name="cardholder_name" required>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Товары -->
+        <h4>Ваш заказ:</h4>
+        <ul class="list-group mb-3">
+            {% for item in cart_items %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ item.product.name }} (x{{ item.quantity }})
+                    <span class="badge bg-primary rounded-pill">{{ item.total_price }} руб.</span>
+                </li>
+            {% endfor %}
+        </ul>
+        <p class="fs-5"><strong>Итого:</strong> {{ total_price }} руб.</p>
+
+        <div class="d-grid">
+            <button type="submit" class="btn btn-success btn-lg">Оформить заказ</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function toggleDeliveryOptions() {
+        const method = document.getElementById("delivery_method").value;
+        document.getElementById("pickup_address").style.display = method === "pickup" ? "block" : "none";
+        document.getElementById("pvz_select").style.display = method === "pvz" ? "block" : "none";
+        document.getElementById("delivery_address").style.display = method === "delivery" ? "block" : "none";
+    }
+
+    document.addEventListener('DOMContentLoaded', toggleDeliveryOptions);
+
+    const cardInput = document.getElementById("card_number");
+    const expiryInput = document.getElementById("expiry_date");
+    const cvvInput = document.getElementById("cvv");
+
+    // Автоформатирование номера карты
+    cardInput.addEventListener("input", (e) => {
+        let value = e.target.value.replace(/\D/g, ""); // удаляем все нецифры
+        value = value.substring(0, 16); // максимум 16 цифр
+        let formatted = "";
+        for (let i = 0; i < value.length; i += 4) {
+            formatted += value.substring(i, i + 4) + " ";
+        }
+        e.target.value = formatted.trim();
+    });
+
+    // Валидация при отправке формы
+    document.querySelector("form").addEventListener("submit", (e) => {
+        const cardDigits = cardInput.value.replace(/\s/g, "");
+        if (cardDigits.length !== 16) {
+            alert("Номер карты должен содержать ровно 16 цифр.");
+            e.preventDefault();
+        }
+
+        const expiry = expiryInput.value;
+        if (!/^\d{2}\/\d{2}$/.test(expiry)) {
+            alert("Введите срок действия в формате MM/YY.");
+            e.preventDefault();
+        }
+
+        const cvv = cvvInput.value;
+        if (!/^\d{3}$/.test(cvv)) {
+            alert("CVV должен содержать ровно 3 цифры.");
+            e.preventDefault();
+        }
+    });
+
+    // Автоввод слеша в сроке действия
+    expiryInput.addEventListener("input", (e) => {
+        let value = e.target.value.replace(/\D/g, "").substring(0, 4);
+        if (value.length > 2) {
+            e.target.value = value.substring(0, 2) + "/" + value.substring(2);
+        } else {
+            e.target.value = value;
+        }
+    });
+
+    // Ограничение CVV
+    cvvInput.addEventListener("input", (e) => {
+        e.target.value = e.target.value.replace(/\D/g, "").substring(0, 3);
+    });
+</script>
+{% endblock %}

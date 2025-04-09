@@ -253,11 +253,6 @@ def product_search(request):
         'results': results
     })
 
-# ОФОРМЛЕНИЕ ЗАКАЗА
-def checkout_view(request):
-
-    return render(request, 'accounts/checkout.html')
-
 # ДОСТАВКА
 def delivery_view(request):
     return render(request, 'delivery.html')
@@ -325,3 +320,55 @@ def delete_pickup_point(request, pk):
 def product_detail(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     return render(request, 'product_detail.html', {'product': product})
+
+# ОФОРМЛЕНИЕ ЗАКАЗА
+@login_required
+def checkout_view(request):
+    user = request.user
+    user_profile = get_object_or_404(UserProfile, user=user)
+
+    product_id = request.GET.get('product_id')
+    cart_items = []
+    total_price = 0
+
+    if product_id:
+        product = get_object_or_404(Product, id=product_id)
+
+        # Добавляем товар в корзину пользователя, если его там нет
+        cart_item, created = Cart.objects.get_or_create(user=user, product=product)
+        if created:
+            cart_item.quantity = 1
+            cart_item.save()
+
+        cart_items = [cart_item]
+        total_price = cart_item.product.price * cart_item.quantity
+    else:
+        cart_items = Cart.objects.filter(user=user)
+        total_price = sum(item.product.price * item.quantity for item in cart_items)
+
+    if request.method == 'POST':
+        delivery_method = request.POST.get('delivery_method')
+        pvz_point_id = request.POST.get('pvz_point')
+
+        card_number = request.POST.get('card_number')
+        expiry_date = request.POST.get('expiry_date')
+        cardholder_name = request.POST.get('cardholder_name')
+        cvv = request.POST.get('cvv')
+
+        # Здесь должна быть логика создания заказа и списания средств, если требуется
+
+        # Очищаем корзину только если заказ из корзины
+        if not product_id:
+            Cart.objects.filter(user=user).delete()
+
+        messages.success(request, "Заказ успешно оформлен!")
+        return redirect('home')
+
+    pickup_points = PickupPoint.objects.all()
+
+    return render(request, 'accounts/checkout.html', {
+        'cart_items': cart_items,
+        'total_price': total_price,
+        'pickup_points': pickup_points,
+        'user_profile': user_profile,
+    })
