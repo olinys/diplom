@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<a href="{% url 'home' %}" class="btn btn-outline-secondary mb-3">
+    ← Назад на главную
+</a>
+
+<div class="container">
+    <h2>Каталог товаров</h2>
+
+    <!-- Список категорий -->
+    <div class="list-group">
+        <a href="{% url 'catalog' %}" class="list-group-item list-group-item-action">Все категории</a>
+        {% for category in categories %}
+        <a href="{% url 'catalog_by_category' category.id %}" class="list-group-item list-group-item-action">{{ category.name }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="mt-4">
+        <h3>Товары</h3>
+        {% if products %}
+        <div class="row">
+            {% for product in products %}
+                {% include 'includes/product_card.html' %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center">Товары не найдены.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

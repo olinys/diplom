@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center">
+        {% if success %}
+            <h2 class="text-success">✅ Товар добавлен в корзину!</h2>
+            <p class="lead">Вы можете продолжить покупки или перейти в корзину.</p>
+        {% else %}
+            <h2 class="text-danger">❌ Не удалось добавить товар</h2>
+            <p class="lead">Попробуйте снова или свяжитесь с поддержкой.</p>
+        {% endif %}
+
+        <div class="mt-4">
+            <a href="{% url 'cart' %}" class="btn btn-primary">🛒 Перейти в корзину</a>
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary">← Продолжить покупки</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

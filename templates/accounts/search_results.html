@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<a href="{% url 'home' %}" class="btn btn-outline-secondary mb-3">
+    ← Назад
+</a>
+
+<h2>Результаты поиска по запросу: "{{ query }}"</h2>
+
+{% if results %}
+<div class="row">
+    {% for product in results %}
+        {% include 'includes/product_card.html' %}
+    {% endfor %}
+</div>
+{% else %}
+<p>Ничего не найдено.</p>
+{% endif %}
+
+<script>
+    document.getElementById('search-input').addEventListener('input', function() {
+        let query = this.value;
+        let resultsContainer = document.getElementById('autocomplete-results');
+
+        if (query.length > 0) {
+            fetch(`/search/autocomplete/?q=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    resultsContainer.innerHTML = '';
+                    if (data.results.length > 0) {
+                        resultsContainer.style.display = 'block';
+                        data.results.forEach(function(product) {
+                            let listItem = document.createElement('li');
+                            listItem.classList.add('list-group-item');
+                            listItem.textContent = `${product.name} - ${product.price} руб.`;
+                            listItem.onclick = function() {
+                                document.getElementById('search-input').value = product.name;
+                                resultsContainer.style.display = 'none';
+                            };
+                            resultsContainer.appendChild(listItem);
+                        });
+                    } else {
+                        resultsContainer.style.display = 'none';
+                    }
+                });
+        } else {
+            resultsContainer.style.display = 'none';
+        }
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center mt-5">
+    <h1 class="fw-bold">Добро пожаловать в интернет-магазин!</h1>
+    <p class="lead text-muted">Лучшие товары по выгодным ценам</p>
+
+    {% if user.is_authenticated %}
+    <p class="mt-4">Вы вошли как <strong>{{ user.username }}</strong></p>
+
+    {% if user.is_superuser %}
+    <div class="d-flex flex-column align-items-center mt-3 gap-2">
+        <a href="{% url 'add_product' %}" class="btn btn-success">Добавить товар</a>
+        <a href="{% url 'users_list' %}" class="btn btn-success">Активность пользователей</a>
+        <a href="{% url 'add_pickup_point' %}" class="btn btn-success">Добавить ПВЗ</a>
+    </div>
+    {% else %}
+    <a href="{% url 'logout' %}" class="btn btn-danger">Выйти</a>
+    {% endif %}
+    {% else %}
+    <p class="mt-4">Вы не авторизованы.</p>
+    <a href="{% url 'login' %}" class="btn btn-primary me-2">Войти</a>
+    <a href="{% url 'register' %}" class="btn btn-outline-secondary">Регистрация</a>
+    {% endif %}
+</div>
+
+<div class="container mt-5">
+    <h2 class="text-center">Наши товары</h2>
+    <div class="row">
+        {% for product in products %}
+        {% include 'includes/product_card.html' %}
+        {% empty %}
+        <p class="text-center">Товары не найдены.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

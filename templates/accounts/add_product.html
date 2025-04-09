@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Добавить товар</h2>
+    
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ product_form.as_p }}
+        <button type="submit" class="btn btn-primary">Добавить товар</button>
+    </form>
+
+    <hr>
+
+    <h4>Не нашли нужную категорию?</h4>
+    <a href="{% url 'add_category' %}" class="btn btn-secondary">Добавить категорию</a>
+</div>
+{% endblock %}

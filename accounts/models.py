@@ -1,0 +1,88 @@
+from django.db import models
+from django.contrib.auth.models import User
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Связь с моделью User
+    first_name = models.CharField(max_length=100, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
+    phone_number = models.CharField(max_length=20, blank=True)
+    birth_date = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=10, choices=[('M', 'Male'), ('F', 'Female')], blank=True)
+    delivery_address = models.TextField(blank=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s profile"
+    
+
+class Category(models.Model):
+    name = models.CharField(max_length=255, unique=True, verbose_name="Название категории")
+
+    def __str__(self):
+        return self.name
+
+class Product(models.Model):
+    name = models.CharField(max_length=255, verbose_name="Название")
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена")
+    parameter_1 = models.CharField(max_length=255, blank=True, verbose_name="Параметр 1")
+    parameter_2 = models.CharField(max_length=255, blank=True, verbose_name="Параметр 2")
+    parameter_3 = models.CharField(max_length=255, blank=True, verbose_name="Параметр 3")
+    parameter_4 = models.CharField(max_length=255, blank=True, verbose_name="Параметр 4")
+    parameter_5 = models.CharField(max_length=255, blank=True, verbose_name="Параметр 5")
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Категория")
+    sku = models.CharField(max_length=50, unique=True, verbose_name="Артикул", blank=True)
+    image = models.ImageField(upload_to="product_images/", blank=True, null=True, verbose_name="Изображение")
+    description = models.TextField(blank=True, null=True, verbose_name="Описание")  # Новое поле для описания
+    stock_quantity = models.PositiveIntegerField(default=0, verbose_name="Количество в наличии")  # Новое поле для количества товара
+
+    def save(self, *args, **kwargs):
+        if not self.sku:
+            last_product = Product.objects.order_by('-id').first()
+            base_sku = 10000000
+            if last_product and last_product.sku.isdigit():
+                self.sku = str(int(last_product.sku) + 1)
+            else:
+                self.sku = str(base_sku)
+        super().save(*args, **kwargs)
+        
+    def __str__(self):
+        return self.name
+
+    
+class Cart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)  # Проверьте, что здесь правильно указана модель и внешний ключ
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.quantity}"
+    
+
+class PickupPoint(models.Model):
+    name = models.CharField(max_length=255)
+    address = models.CharField(max_length=255)
+
+    # Время открытия и закрытия для каждого дня
+    monday_open = models.TimeField(default="09:00:00")
+    monday_close = models.TimeField(default="12:00:00")
+
+    tuesday_open = models.TimeField(default="09:00:00")
+    tuesday_close = models.TimeField(default="21:00:00")
+
+    wednesday_open = models.TimeField(default="09:00:00")
+    wednesday_close = models.TimeField(default="21:00:00")
+
+    thursday_open = models.TimeField(default="09:00:00")
+    thursday_close = models.TimeField(default="21:00:00")
+
+    friday_open = models.TimeField(default="09:00:00")
+    friday_close = models.TimeField(default="21:00:00")
+
+    saturday_open = models.TimeField(default="09:00:00")
+    saturday_close = models.TimeField(default="21:00:00")
+
+    sunday_open = models.TimeField(default="09:00:00")
+    sunday_close = models.TimeField(default="21:00:00")
+
+    def __str__(self):
+        return self.name
