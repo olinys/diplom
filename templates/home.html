@@ -13,6 +13,7 @@
         <a href="{% url 'add_product' %}" class="btn btn-success">Добавить товар</a>
         <a href="{% url 'users_list' %}" class="btn btn-success">Активность пользователей</a>
         <a href="{% url 'add_pickup_point' %}" class="btn btn-success">Добавить ПВЗ</a>
+        <a href="{% url 'view_orders' %}" class="btn btn-success">Просмотр заказов</a>
     </div>
     {% else %}
     <a href="{% url 'logout' %}" class="btn btn-danger">Выйти</a>

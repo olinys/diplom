@@ -388,3 +388,18 @@ def checkout_view(request):
         'pickup_points': pickup_points,
         'user_profile': user_profile,
     })
+
+
+@staff_member_required
+def view_orders(request):
+    orders = Order.objects.prefetch_related('products').select_related('user')
+
+    if request.method == 'POST':
+        order_id = request.POST.get('order_id')
+        new_status = request.POST.get('status')
+        order = Order.objects.get(id=order_id)
+        order.status = new_status
+        order.save()
+        return redirect('view_orders')
+
+    return render(request, 'view_orders.html', {'orders': orders})

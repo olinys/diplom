@@ -31,6 +31,7 @@ urlpatterns = [
     path('delete/<int:pk>/', views.delete_pickup_point, name='delete_pickup_point'),
     path('edit/<int:pk>/', views.edit_pickup_point, name='edit_pickup_point'),
     path('product/<int:product_id>/', views.product_detail, name='product_detail'),
+    path('view-orders/', views.view_orders, name='view_orders'),
     ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
