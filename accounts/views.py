@@ -355,6 +355,7 @@ def checkout_view(request):
         cardholder_name = request.POST.get('cardholder_name')
         cvv = request.POST.get('cvv')
 
+        # Создаем заказ
         order = Order.objects.create(
             user=user,
             delivery_address=user_profile.delivery_address,
@@ -365,17 +366,20 @@ def checkout_view(request):
             cvv=cvv,
         )
 
+        # Добавляем товары в заказ и уменьшаем количество на складе
         for item in cart_items:
             OrderProduct.objects.create(order=order, product=item.product, quantity=item.quantity)
-            item.product.stock_quantity -=item.quantity
+            item.product.stock_quantity -= item.quantity
             item.product.save()
 
-        if not product_id:
-            Cart.objects.filter(user=user).delete
+            # Удаляем товар из корзины
+            item.delete()
 
+        # Уведомление об успешном оформлении заказа
         messages.success(request, "Заказ успешно оформлен!")
         return redirect('home')
 
+    # Получаем пункты самовывоза
     pickup_points = PickupPoint.objects.all()
 
     return render(request, 'accounts/checkout.html', {
