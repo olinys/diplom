@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)  # Связь с моделью User
@@ -86,3 +87,49 @@ class PickupPoint(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ('placed', 'Оформлен'),
+        ('shipped', 'Отправлен'),
+        ('delivered', 'Доставлен'),
+        ('cancelled', 'Отменен'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Пользователь
+    delivery_address = models.TextField()  # Адрес доставки
+    products = models.ManyToManyField(Product, through='OrderProduct')  # Связь с продуктами через промежуточную модель
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)  # Общая стоимость
+    order_date = models.DateTimeField(default=timezone.now)  # Дата оформления
+    card_number = models.CharField(max_length=19)  # Номер карты
+    card_expiry_date = models.CharField(max_length=5)  # Срок действия карты
+    cardholder_name = models.CharField(max_length=100)  # Имя держателя карты
+    cvv = models.CharField(max_length=3, verbose_name="CVV")  # CVV
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='placed')  # Статус заказа
+
+    def __str__(self):
+        return f"Заказ {self.id} от {self.user.username}"
+
+    def save(self, *args, **kwargs):
+        # Шифрование номера карты и CVV
+        self.card_number = self.encrypt_card(self.card_number)
+        self.cvv = self.encrypt_cvv(self.cvv)
+        super().save(*args, **kwargs)
+
+    def encrypt_card(self, card_data):
+        # Простое шифрование номера карты
+        return "**** **** **** " + card_data[-4:]
+
+    def encrypt_cvv(self, cvv_data):
+        # Простейшее шифрование CVV, скрываем все символы, кроме последних
+        return "****"
+    
+
+class OrderProduct(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()  # Количество товара
+
+    def __str__(self):
+        return f"{self.product.name} ({self.quantity})"

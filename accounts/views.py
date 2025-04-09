@@ -4,7 +4,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from .forms import UserRegisterForm, UserProfileForm, ProductForm, CategoryForm, PickupPointForm
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Cart, UserProfile, Product, Category, User, PickupPoint
+from .models import Cart, UserProfile, Product, Category, User, PickupPoint, Order, OrderProduct
 from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.models import User
@@ -355,11 +355,23 @@ def checkout_view(request):
         cardholder_name = request.POST.get('cardholder_name')
         cvv = request.POST.get('cvv')
 
-        # Здесь должна быть логика создания заказа и списания средств, если требуется
+        order = Order.objects.create(
+            user=user,
+            delivery_address=user_profile.delivery_address,
+            total_price=total_price,
+            card_number=card_number,
+            card_expiry_date=expiry_date,
+            cardholder_name=cardholder_name,
+            cvv=cvv,
+        )
 
-        # Очищаем корзину только если заказ из корзины
+        for item in cart_items:
+            OrderProduct.objects.create(order=order, product=item.product, quantity=item.quantity)
+            item.product.stock_quantity -=item.quantity
+            item.product.save()
+
         if not product_id:
-            Cart.objects.filter(user=user).delete()
+            Cart.objects.filter(user=user).delete
 
         messages.success(request, "Заказ успешно оформлен!")
         return redirect('home')
