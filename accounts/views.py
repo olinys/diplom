@@ -254,15 +254,6 @@ def product_search(request):
         'results': results
     })
 
-# ДОСТАВКА
-def delivery_view(request):
-    return render(request, 'delivery.html')
-
-# УВЕДОМЛЕНИЯ
-def notifications_view(request):
-    return render(request, 'notifications.html')
-
-
 
 # ПРОСМОТР АКТИВНОСТЕЙ ПОЛЬЗОВАТЕЛЕЙ
 @user_passes_test(lambda u: u.is_superuser)
@@ -462,3 +453,13 @@ def user_info_view(request):
 
 def privacy_policy(request):
     return render(request, 'accounts/privacy_policy.html')
+
+
+# ДОСТАВКА
+def delivery_view(request):
+    orders = Order.objects.filter(user=request.user)
+    return render(request, 'delivery.html', {'orders': orders})
+
+# УВЕДОМЛЕНИЯ
+def notifications_view(request):
+    return render(request, 'notifications.html')

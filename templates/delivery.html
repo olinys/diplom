@@ -1,6 +1,33 @@
 {% extends 'base.html' %}
 
+{% block title %}Мои доставки{% endblock %}
+
 {% block content %}
-<h2>Информация о доставке</h2>
-<p>Мы доставляем товары по всей России в течение 3-5 рабочих дней.</p>
+<div class="container mt-5">
+    <h2 class="mb-4">Информация о доставке</h2>
+
+    {% if orders %}
+        {% for order in orders %}
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Номер заказа: {{ order.order_number }}</h5>
+                <p><strong>Адрес доставки:</strong> {{ order.delivery_address }}</p>
+                <p><strong>Товары:</strong>
+                    <ul>
+                        {% for order_product in order.orderproduct_set.all %}
+                            <li>
+                                <a href="{% url 'product_detail' order_product.product.id %}">{{ order_product.product.name }}</a> ({{ order_product.quantity }} шт.)
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </p>
+                <p><strong>Сумма заказа:</strong> {{ order.total_price }} руб.</p>
+                <p><strong>Статус:</strong> {{ order.get_status_display }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>У вас нет заказов для отображения.</p>
+    {% endif %}
+</div>
 {% endblock %}
