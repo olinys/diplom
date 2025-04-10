@@ -1,33 +1,103 @@
 {% extends 'base.html' %}
 
-{% block title %}Мои доставки{% endblock %}
-
 {% block content %}
-<div class="container mt-5">
+<div class="container mt-4">
     <h2 class="mb-4">Информация о доставке</h2>
+
+    <form method="get" class="row g-3 mb-4">
+        <!-- Фильтры -->
+        <div class="col-md-4">
+            <label class="form-label">Фильтр по товару:</label>
+            <select name="product" class="form-select">
+                <option value="all">Все</option>
+                {% for product in products %}
+                    <option value="{{ product.name }}" {% if selected_product == product.name %}selected{% endif %}>
+                        {{ product.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Фильтр по статусу:</label>
+            <select name="status" class="form-select">
+                <option value="all">Все</option>
+                {% for value, label in statuses %}
+                    <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Фильтр по адресу:</label>
+            <select name="address" class="form-select">
+                <option value="all">Все</option>
+                {% for address in addresses %}
+                    <option value="{{ address }}" {% if selected_address == address %}selected{% endif %}>
+                        {{ address }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 mt-3">
+            <button type="submit" class="btn btn-primary">Применить фильтры</button>
+        </div>
+    </form>
 
     {% if orders %}
         {% for order in orders %}
-        <div class="card mb-4 shadow-sm">
+        <div class="card mb-3">
+            <div class="card-header">
+                <strong>Номер заказа:</strong> {{ order.order_number }}
+            </div>
             <div class="card-body">
-                <h5 class="card-title">Номер заказа: {{ order.order_number }}</h5>
                 <p><strong>Адрес доставки:</strong> {{ order.delivery_address }}</p>
-                <p><strong>Товары:</strong>
-                    <ul>
-                        {% for order_product in order.orderproduct_set.all %}
-                            <li>
-                                <a href="{% url 'product_detail' order_product.product.id %}">{{ order_product.product.name }}</a> ({{ order_product.quantity }} шт.)
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </p>
-                <p><strong>Сумма заказа:</strong> {{ order.total_price }} руб.</p>
+                <p><strong>Заказанные товары:</strong></p>
+                <ul>
+                    {% for op in order.orderproduct_set.all %}
+                        <li>
+                            <a href="{% url 'product_detail' op.product.id %}">{{ op.product.name }}</a>
+                            — {{ op.quantity }} шт.
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p><strong>Сумма заказа:</strong> {{ order.total_price }} BYN</p>
                 <p><strong>Статус:</strong> {{ order.get_status_display }}</p>
             </div>
         </div>
         {% endfor %}
+
+        <!-- Пагинация -->
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if selected_product != 'all' %}product={{ selected_product }}&{% endif %}
+                            {% if selected_status != 'all' %}status={{ selected_status }}&{% endif %}
+                            {% if selected_address != 'all' %}address={{ selected_address }}&{% endif %}
+                            page={{ page_obj.previous_page_number }}">Назад</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if selected_product != 'all' %}product={{ selected_product }}&{% endif %}
+                            {% if selected_status != 'all' %}status={{ selected_status }}&{% endif %}
+                            {% if selected_address != 'all' %}address={{ selected_address }}&{% endif %}
+                            page={{ page_obj.next_page_number }}">Вперёд</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+
     {% else %}
-        <p>У вас нет заказов для отображения.</p>
+        <div class="alert alert-info">Данных доставок нет.</div>
     {% endif %}
 </div>
 {% endblock %}

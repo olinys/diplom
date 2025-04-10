@@ -457,8 +457,41 @@ def privacy_policy(request):
 
 # ДОСТАВКА
 def delivery_view(request):
-    orders = Order.objects.filter(user=request.user)
-    return render(request, 'delivery.html', {'orders': orders})
+    all_orders = Order.objects.all()
+
+    all_products = Product.objects.filter(orderproduct__order__in=all_orders).distinct()
+    all_statuses = Order.STATUS_CHOICES
+    all_addresses = all_orders.values_list('delivery_address', flat=True).distinct()
+
+    selected_product = request.GET.get('product', 'all')
+    selected_status = request.GET.get('status', 'all')
+    selected_address = request.GET.get('address', 'all')
+
+    filtered_orders = all_orders
+    if selected_product != 'all':
+        filtered_orders = filtered_orders.filter(products__name=selected_product)
+
+    if selected_status != 'all':
+        filtered_orders = filtered_orders.filter(status=selected_status)
+
+    if selected_address != 'all':
+        filtered_orders = filtered_orders.filter(delivery_address=selected_address)
+
+    # Пагинация
+    paginator = Paginator(filtered_orders.order_by('-id'), 5)  # 5 заказов на страницу
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'delivery.html', {
+        'orders': page_obj,
+        'page_obj': page_obj,
+        'products': all_products,
+        'statuses': all_statuses,
+        'addresses': all_addresses,
+        'selected_product': selected_product,
+        'selected_status': selected_status,
+        'selected_address': selected_address,
+    })
 
 # УВЕДОМЛЕНИЯ
 def notifications_view(request):
