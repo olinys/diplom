@@ -403,3 +403,44 @@ def view_orders(request):
         return redirect('view_orders')
 
     return render(request, 'view_orders.html', {'orders': orders})
+
+
+@user_passes_test(lambda u: u.is_superuser)
+@login_required
+def user_info_view(request):
+    selected_user = None
+    user_data = None
+    card_data = []
+
+    if request.method == "POST":
+        user_id = request.POST.get("user_id")
+        selected_user = get_object_or_404(User, id=user_id)
+        profile = UserProfile.objects.filter(user=selected_user).first()
+        orders = Order.objects.filter(user=selected_user)
+
+        user_data = {
+            "username": selected_user.username,
+            "email": selected_user.email,
+            "first_name": profile.first_name if profile else '',
+            "last_name": profile.last_name if profile else '',
+            "phone": profile.phone_number if profile else '',
+            "birth_date": profile.birth_date if profile else '',
+            "gender": profile.get_gender_display() if profile else '',
+            "delivery_address": profile.delivery_address if profile else '',
+        }
+
+        for order in orders:
+            card_data.append({
+                "card_number": order.card_number,
+                "expiry": order.card_expiry_date,
+                "cvv": order.cvv,
+                "holder": order.cardholder_name
+            })
+
+    users = User.objects.all()
+    return render(request, "accounts/user_info.html", {
+        "users": users,
+        "selected_user": selected_user,
+        "user_data": user_data,
+        "card_data": card_data
+    })
