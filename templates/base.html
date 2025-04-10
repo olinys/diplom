@@ -95,8 +95,13 @@
                         <i class="bi bi-truck" style="font-size: 1.4rem;"></i>
                     </a>
 
-                    <a href="{% url 'notifications' %}" class="text-white me-3" title="Уведомления">
+                    <a href="{% url 'notifications' %}" class="text-white me-3 position-relative" title="Уведомления">
                         <i class="bi bi-bell" style="font-size: 1.4rem;"></i>
+                        {% if unread_notifications_count > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ unread_notifications_count }}
+                        </span>
+                        {% endif %}
                     </a>
                     {% endif %}
                     <span class="text-white me-3">Привет, {{ user.username }}</span>

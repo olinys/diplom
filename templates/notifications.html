@@ -1,6 +1,24 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Уведомления</h2>
-<p>Пока что нет новых уведомлений.</p>
+<div class="container mt-5">
+    <h2>Уведомления</h2>
+
+    {% if notifications %}
+    <ul class="list-group mt-4">
+        {% for notif in notifications %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ notif.message }}
+            <form method="POST" style="margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="delete" value="{{ notif.id }}">
+                <button class="btn btn-sm btn-outline-danger">Удалить</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="mt-3">Пока что нет новых уведомлений.</p>
+    {% endif %}
+</div>
 {% endblock %}

@@ -4,7 +4,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from .forms import UserRegisterForm, UserProfileForm, ProductForm, CategoryForm, PickupPointForm
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Cart, UserProfile, Product, Category, User, PickupPoint, Order, OrderProduct
+from .models import Cart, UserProfile, Product, Category, User, PickupPoint, Order, OrderProduct, Notification
 from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.models import User
@@ -390,12 +390,23 @@ def view_orders(request):
         order_id = request.POST.get('order_id')
         new_status = request.POST.get('status')
         order = Order.objects.get(id=order_id)
-        order.status = new_status
-        order.save()
+
+        # Проверка изменения статуса
+        if order.status != new_status:
+            old_status = order.status
+            order.status = new_status
+            order.save()
+
+            # Создание уведомления для пользователя
+            Notification.objects.create(
+                user=order.user,
+                order=order,
+                message=f"Заказ {order.order_number} теперь в статусе: {order.get_status_display()}"
+            )
+
         return redirect('view_orders')
 
     return render(request, 'view_orders.html', {'orders': orders})
-
 
 @user_passes_test(lambda u: u.is_superuser)
 @login_required
@@ -477,14 +488,9 @@ def delivery_view(request):
     if selected_address != 'all':
         filtered_orders = filtered_orders.filter(delivery_address=selected_address)
 
-    # Пагинация
-    paginator = Paginator(filtered_orders.order_by('-id'), 5)  # 5 заказов на страницу
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
+    # Убираем пагинацию, передаем все заказы
     return render(request, 'delivery.html', {
-        'orders': page_obj,
-        'page_obj': page_obj,
+        'orders': filtered_orders,
         'products': all_products,
         'statuses': all_statuses,
         'addresses': all_addresses,
@@ -494,5 +500,25 @@ def delivery_view(request):
     })
 
 # УВЕДОМЛЕНИЯ
+@login_required
 def notifications_view(request):
-    return render(request, 'notifications.html')
+    # Обрабатываем удаление уведомлений
+    if request.method == 'POST':
+        notification_id = request.POST.get('delete')
+        if notification_id:
+            notification = Notification.objects.get(id=notification_id, user=request.user)
+            notification.delete()
+
+    # Загружаем уведомления пользователя
+    notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
+
+    # Если уведомление прочитано, обновляем его статус
+    for notif in notifications:
+        if not notif.is_read:
+            notif.is_read = True
+            notif.save()
+
+    return render(request, 'notifications.html', {
+        'notifications': notifications
+    })
+
