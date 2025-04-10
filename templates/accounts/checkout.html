@@ -80,8 +80,16 @@
         </ul>
         <p class="fs-5"><strong>Итого:</strong> {{ total_price }} руб.</p>
 
+        <!-- Политика конфиденциальности -->
+        <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" id="privacy_policy_checkbox">
+            <label class="form-check-label" for="privacy_policy_checkbox">
+                Я соглашаюсь с <a href="{% url 'privacy_policy' %}" target="_blank">политикой конфиденциальности</a>
+            </label>
+        </div>
+
         <div class="d-grid">
-            <button type="submit" class="btn btn-success btn-lg">Оформить заказ</button>
+            <button type="submit" class="btn btn-success btn-lg" id="submit_button" disabled>Оформить заказ</button>
         </div>
     </form>
 </div>
@@ -94,57 +102,64 @@
         document.getElementById("delivery_address").style.display = method === "delivery" ? "block" : "none";
     }
 
-    document.addEventListener('DOMContentLoaded', toggleDeliveryOptions);
+    document.addEventListener('DOMContentLoaded', () => {
+        toggleDeliveryOptions();
 
-    const cardInput = document.getElementById("card_number");
-    const expiryInput = document.getElementById("expiry_date");
-    const cvvInput = document.getElementById("cvv");
+        const cardInput = document.getElementById("card_number");
+        const expiryInput = document.getElementById("expiry_date");
+        const cvvInput = document.getElementById("cvv");
+        const checkbox = document.getElementById("privacy_policy_checkbox");
+        const submitButton = document.getElementById("submit_button");
 
-    // Автоформатирование номера карты
-    cardInput.addEventListener("input", (e) => {
-        let value = e.target.value.replace(/\D/g, ""); // удаляем все нецифры
-        value = value.substring(0, 16); // максимум 16 цифр
-        let formatted = "";
-        for (let i = 0; i < value.length; i += 4) {
-            formatted += value.substring(i, i + 4) + " ";
-        }
-        e.target.value = formatted.trim();
-    });
+        checkbox.addEventListener("change", () => {
+            submitButton.disabled = !checkbox.checked;
+        });
 
-    // Валидация при отправке формы
-    document.querySelector("form").addEventListener("submit", (e) => {
-        const cardDigits = cardInput.value.replace(/\s/g, "");
-        if (cardDigits.length !== 16) {
-            alert("Номер карты должен содержать ровно 16 цифр.");
-            e.preventDefault();
-        }
+        // Автоформатирование номера карты
+        cardInput.addEventListener("input", (e) => {
+            let value = e.target.value.replace(/\D/g, "").substring(0, 16);
+            let formatted = "";
+            for (let i = 0; i < value.length; i += 4) {
+                formatted += value.substring(i, i + 4) + " ";
+            }
+            e.target.value = formatted.trim();
+        });
 
-        const expiry = expiryInput.value;
-        if (!/^\d{2}\/\d{2}$/.test(expiry)) {
-            alert("Введите срок действия в формате MM/YY.");
-            e.preventDefault();
-        }
+        // Автоввод слеша в сроке действия
+        expiryInput.addEventListener("input", (e) => {
+            let value = e.target.value.replace(/\D/g, "").substring(0, 4);
+            if (value.length > 2) {
+                e.target.value = value.substring(0, 2) + "/" + value.substring(2);
+            } else {
+                e.target.value = value;
+            }
+        });
 
-        const cvv = cvvInput.value;
-        if (!/^\d{3}$/.test(cvv)) {
-            alert("CVV должен содержать ровно 3 цифры.");
-            e.preventDefault();
-        }
-    });
+        // Ограничение CVV
+        cvvInput.addEventListener("input", (e) => {
+            e.target.value = e.target.value.replace(/\D/g, "").substring(0, 3);
+        });
 
-    // Автоввод слеша в сроке действия
-    expiryInput.addEventListener("input", (e) => {
-        let value = e.target.value.replace(/\D/g, "").substring(0, 4);
-        if (value.length > 2) {
-            e.target.value = value.substring(0, 2) + "/" + value.substring(2);
-        } else {
-            e.target.value = value;
-        }
-    });
+        // Валидация при отправке формы
+        document.querySelector("form").addEventListener("submit", (e) => {
+            const cardDigits = cardInput.value.replace(/\s/g, "");
+            if (cardDigits.length !== 16) {
+                alert("Номер карты должен содержать ровно 16 цифр.");
+                e.preventDefault();
+            }
 
-    // Ограничение CVV
-    cvvInput.addEventListener("input", (e) => {
-        e.target.value = e.target.value.replace(/\D/g, "").substring(0, 3);
+            const expiry = expiryInput.value;
+            if (!/^\d{2}\/\d{2}$/.test(expiry)) {
+                alert("Введите срок действия в формате MM/YY.");
+                e.preventDefault();
+            }
+
+            const cvv = cvvInput.value;
+            if (!/^\d{3}$/.test(cvv)) {
+                alert("CVV должен содержать ровно 3 цифры.");
+                e.preventDefault();
+            }
+        });
     });
 </script>
 {% endblock %}

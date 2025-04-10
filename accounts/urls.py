@@ -33,6 +33,7 @@ urlpatterns = [
     path('product/<int:product_id>/', views.product_detail, name='product_detail'),
     path('view_orders/', views.view_orders, name='view_orders'),
     path('user_info/', views.user_info_view, name='user_info'),
+    path('privacy_policy/', views.privacy_policy, name='privacy_policy'),
     ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

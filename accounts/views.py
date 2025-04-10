@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.admin.views.decorators import staff_member_required
+from django.core.paginator import Paginator
 
 # РЕГИСТРАЦИЯ
 def register(request):
@@ -412,11 +413,12 @@ def user_info_view(request):
     user_data = None
     card_data = []
 
-    if request.method == "POST":
-        user_id = request.POST.get("user_id")
+    user_id = request.POST.get("user_id") or request.GET.get("user_id")
+
+    if user_id:
         selected_user = get_object_or_404(User, id=user_id)
         profile = UserProfile.objects.filter(user=selected_user).first()
-        orders = Order.objects.filter(user=selected_user)
+        orders = Order.objects.filter(user=selected_user).order_by('-id')  # новые сначала
 
         user_data = {
             "username": selected_user.username,
@@ -429,18 +431,34 @@ def user_info_view(request):
             "delivery_address": profile.delivery_address if profile else '',
         }
 
-        for order in orders:
-            card_data.append({
-                "card_number": order.card_number,
-                "expiry": order.card_expiry_date,
-                "cvv": order.cvv,
-                "holder": order.cardholder_name
-            })
+        # Список карт
+        card_data = [
+            {
+                "card_number": o.card_number,
+                "expiry": o.card_expiry_date,
+                "cvv": o.cvv,
+                "holder": o.cardholder_name,
+            } for o in orders if o.card_number
+        ]
+
+        # Пагинация
+        paginator = Paginator(card_data, 5)  # по 5 карточек на страницу
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+    else:
+        page_obj = None
 
     users = User.objects.all()
+
     return render(request, "accounts/user_info.html", {
         "users": users,
         "selected_user": selected_user,
         "user_data": user_data,
-        "card_data": card_data
+        "card_data": page_obj,  # передаём page_obj, а не весь список
+        "page_obj": page_obj,
     })
+
+
+def privacy_policy(request):
+    return render(request, 'accounts/privacy_policy.html')
