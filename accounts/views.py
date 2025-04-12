@@ -338,6 +338,9 @@ def checkout_view(request):
         cart_items = Cart.objects.filter(user=user)
         total_price = sum(item.product.price * item.quantity for item in cart_items)
 
+    # Получаем пункты самовывоза
+    pickup_points = PickupPoint.objects.all()
+
     if request.method == 'POST':
         delivery_method = request.POST.get('delivery_method')
         pvz_point_id = request.POST.get('pvz_point')
@@ -347,10 +350,26 @@ def checkout_view(request):
         cardholder_name = request.POST.get('cardholder_name')
         cvv = request.POST.get('cvv')
 
+        # Определяем адрес доставки в зависимости от выбранного способа
+        if delivery_method == 'pickup':
+            delivery_address = 'г. Минск, ул. Ленина, д. 1'
+        elif delivery_method == 'pvz':
+            try:
+                pvz_point = PickupPoint.objects.get(id=pvz_point_id)
+                delivery_address = f"ПВЗ: {pvz_point.address}"
+            except PickupPoint.DoesNotExist:
+                messages.error(request, "Выбранный ПВЗ не найден.")
+                return redirect('checkout')
+        elif delivery_method == 'delivery':
+            delivery_address = user_profile.delivery_address
+        else:
+            messages.error(request, "Пожалуйста, выберите способ доставки.")
+            return redirect('checkout')
+
         # Создаем заказ
         order = Order.objects.create(
             user=user,
-            delivery_address=user_profile.delivery_address,
+            delivery_address=delivery_address,
             total_price=total_price,
             card_number=card_number,
             card_expiry_date=expiry_date,
@@ -363,16 +382,11 @@ def checkout_view(request):
             OrderProduct.objects.create(order=order, product=item.product, quantity=item.quantity)
             item.product.stock_quantity -= item.quantity
             item.product.save()
-
-            # Удаляем товар из корзины
             item.delete()
 
         # Уведомление об успешном оформлении заказа
         messages.success(request, "Заказ успешно оформлен!")
         return redirect('home')
-
-    # Получаем пункты самовывоза
-    pickup_points = PickupPoint.objects.all()
 
     return render(request, 'accounts/checkout.html', {
         'cart_items': cart_items,
