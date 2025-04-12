@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Ваши заказы, готовые к выдаче</h2>
+
+    {% if orders %}
+        <!-- Общая сумма выкупа -->
+        <div class="mb-4">
+            <strong>Общая сумма выкупа:</strong> {{ total_price }} BYN
+        </div>
+
+        <ul class="list-group">
+            {% for order in orders %}
+                <li class="list-group-item">
+                    <strong>Номер заказа:</strong> {{ order.order_number }}<br>
+                    <strong>Адрес доставки:</strong> {{ order.delivery_address }}<br>
+                    <strong>Сумма заказа:</strong> {{ order.total_price }} BYN
+                    <ul>
+                        {% for op in order.orderproduct_set.all %}
+                            <li>
+                                <a href="{% url 'product_detail' op.product.id %}">
+                                    {{ op.product.name }}
+                                </a> — {{ op.quantity }} шт.
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Нет заказов, готовых к выдаче.</p>
+    {% endif %}
+</div>
+{% endblock %}

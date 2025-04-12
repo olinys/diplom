@@ -520,6 +520,9 @@ def delivery_view(request):
     # Фильтруем только заказы текущего пользователя
     all_orders = Order.objects.filter(user=request.user)
 
+    # Исключаем заказы со статусом "Готов к выдаче"
+    all_orders = all_orders.exclude(status='ready for pickup')
+
     all_products = Product.objects.filter(orderproduct__order__in=all_orders).distinct()
     all_statuses = Order.STATUS_CHOICES
     all_addresses = all_orders.values_list('delivery_address', flat=True).distinct()
@@ -572,3 +575,15 @@ def notifications_view(request):
         'notifications': notifications
     })
 
+@login_required
+def purchases_view(request):
+    # Получаем все заказы с нужным статусом для текущего пользователя
+    orders_ready_for_pickup = Order.objects.filter(status='ready for pickup', user=request.user)
+
+    # Вычисляем общую сумму
+    total_price = sum(order.total_price for order in orders_ready_for_pickup)
+
+    return render(request, 'accounts/purchases.html', {
+        'orders': orders_ready_for_pickup,
+        'total_price': total_price
+    })
