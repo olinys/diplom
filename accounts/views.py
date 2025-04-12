@@ -481,8 +481,10 @@ def privacy_policy(request):
 
 
 # ДОСТАВКА
+@login_required
 def delivery_view(request):
-    all_orders = Order.objects.all()
+    # Фильтруем только заказы текущего пользователя
+    all_orders = Order.objects.filter(user=request.user)
 
     all_products = Product.objects.filter(orderproduct__order__in=all_orders).distinct()
     all_statuses = Order.STATUS_CHOICES
@@ -493,6 +495,7 @@ def delivery_view(request):
     selected_address = request.GET.get('address', 'all')
 
     filtered_orders = all_orders
+
     if selected_product != 'all':
         filtered_orders = filtered_orders.filter(products__name=selected_product)
 
@@ -502,7 +505,6 @@ def delivery_view(request):
     if selected_address != 'all':
         filtered_orders = filtered_orders.filter(delivery_address=selected_address)
 
-    # Убираем пагинацию, передаем все заказы
     return render(request, 'delivery.html', {
         'orders': filtered_orders,
         'products': all_products,
