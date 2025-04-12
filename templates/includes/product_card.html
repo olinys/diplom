@@ -14,6 +14,20 @@
                 <p class="card-text">Категория: {{ product.category.name }}</p>
                 <p class="card-text">Артикул: {{ product.sku }}</p>
                 <p class="card-text">В наличии: {{ product.stock_quantity }} шт.</p>
+
+                <!-- Рейтинг товара -->
+                <div class="mt-2">
+                    <span>Рейтинг: {{ product.average_rating|floatformat:2 }}</span>
+                    <div>
+                        {% for i in rating_range %}
+                            {% if i <= product.average_rating %}
+                                &#9733; <!-- Звезда заполнена -->
+                            {% else %}
+                                &#9734; <!-- Пустая звезда -->
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
     </a>

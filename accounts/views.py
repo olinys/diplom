@@ -341,14 +341,9 @@ def product_detail(request, product_id):
 
         return redirect('product_detail', product_id=product.id)
 
-    # Пагинация отзывов
-    paginator = Paginator(reviews, 5)  # По 5 отзывов на страницу
-    page_number = request.GET.get('page')  # Получаем номер страницы из GET-запроса
-    page_obj = paginator.get_page(page_number)  # Получаем объект страницы
-
     return render(request, 'product_detail.html', {
         'product': product,
-        'page_obj': page_obj,  # Передаем объект страницы
+        'reviews': reviews,  # Передаем все отзывы
         'can_leave_review': can_leave_review,
         'rating_range': range(1, 6)
     })
