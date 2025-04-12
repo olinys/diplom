@@ -398,20 +398,43 @@ def checkout_view(request):
 
 @staff_member_required
 def view_orders(request):
-    orders = Order.objects.prefetch_related('products').select_related('user')
+    orders = Order.objects.prefetch_related('orderproduct_set__product').select_related('user')
+
+    # Извлечение возможных фильтров
+    selected_user = request.GET.get('user', 'all')
+    selected_status = request.GET.get('status', 'all')
+    selected_address = request.GET.get('address', 'all')
+    selected_product = request.GET.get('product', 'all')
+
+    # Фильтрация
+    if selected_user != 'all':
+        orders = orders.filter(user__username=selected_user)
+
+    if selected_status != 'all':
+        orders = orders.filter(status=selected_status)
+
+    if selected_address != 'all':
+        orders = orders.filter(delivery_address=selected_address)
+
+    if selected_product != 'all':
+        orders = orders.filter(orderproduct__product__name=selected_product)
+
+    # Данные для фильтров (уникальные значения только из текущих заказов)
+    users = orders.values_list('user__username', flat=True).distinct()
+    statuses = Order.STATUS_CHOICES
+    addresses = orders.values_list('delivery_address', flat=True).distinct()
+    products = Product.objects.filter(orderproduct__order__in=orders).distinct()
 
     if request.method == 'POST':
         order_id = request.POST.get('order_id')
         new_status = request.POST.get('status')
         order = Order.objects.get(id=order_id)
 
-        # Проверка изменения статуса
         if order.status != new_status:
             old_status = order.status
             order.status = new_status
             order.save()
 
-            # Создание уведомления для пользователя
             Notification.objects.create(
                 user=order.user,
                 order=order,
@@ -420,7 +443,18 @@ def view_orders(request):
 
         return redirect('view_orders')
 
-    return render(request, 'view_orders.html', {'orders': orders})
+    return render(request, 'view_orders.html', {
+        'orders': orders,
+        'users': users,
+        'statuses': statuses,
+        'addresses': addresses,
+        'products': products,
+        'selected_user': selected_user,
+        'selected_status': selected_status,
+        'selected_address': selected_address,
+        'selected_product': selected_product,
+    })
+
 
 @user_passes_test(lambda u: u.is_superuser)
 @login_required

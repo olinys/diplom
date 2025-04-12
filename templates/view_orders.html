@@ -3,6 +3,55 @@
 {% block content %}
 <div class="container mt-5">
     <h2 class="mb-4">Список заказов</h2>
+
+    <!-- Форма фильтров -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label class="form-label">Фильтр по заказчику:</label>
+            <select name="user" class="form-select">
+                <option value="all">Все</option>
+                {% for user in users %}
+                    <option value="{{ user }}" {% if selected_user == user %}selected{% endif %}>{{ user }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Фильтр по статусу:</label>
+            <select name="status" class="form-select">
+                <option value="all">Все</option>
+                {% for value, label in statuses %}
+                    <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Фильтр по адресу:</label>
+            <select name="address" class="form-select">
+                <option value="all">Все</option>
+                {% for address in addresses %}
+                    <option value="{{ address }}" {% if selected_address == address %}selected{% endif %}>{{ address }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Фильтр по товару:</label>
+            <select name="product" class="form-select">
+                <option value="all">Все</option>
+                {% for product in products %}
+                    <option value="{{ product.name }}" {% if selected_product == product.name %}selected{% endif %}>{{ product.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-12 mt-3">
+            <button type="submit" class="btn btn-primary">Применить фильтры</button>
+        </div>
+    </form>
+
+    <!-- Таблица заказов -->
     <table class="table table-bordered">
         <thead>
             <tr>
@@ -22,9 +71,9 @@
                 <td>{{ order.user.username }}</td>
                 <td>{{ order.delivery_address }}</td>
                 <td>
-                    <ul>
+                    <ul class="mb-0">
                         {% for op in order.orderproduct_set.all %}
-                        <li>{{ op.product.name }} ({{ op.quantity }})</li>
+                            <li>{{ op.product.name }} ({{ op.quantity }})</li>
                         {% endfor %}
                     </ul>
                 </td>
@@ -36,12 +85,16 @@
                         <input type="hidden" name="order_id" value="{{ order.id }}">
                         <select name="status" class="form-select mb-2">
                             {% for value, label in order.STATUS_CHOICES %}
-                            <option value="{{ value }}" {% if value == order.status %}selected{% endif %}>{{ label }}</option>
+                                <option value="{{ value }}" {% if value == order.status %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
-                        <button type="submit" class="btn btn-primary btn-sm">Сохранить</button>
+                        <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
                     </form>
                 </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">Заказы не найдены.</td>
             </tr>
             {% endfor %}
         </tbody>
