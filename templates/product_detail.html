@@ -25,17 +25,99 @@
             <div class="mt-4 d-flex gap-2">
                 {% if user.is_authenticated %}
                     {% if user.is_superuser %}
-                        <!-- Кнопки для суперпользователя -->
                         <a href="{% url 'edit_product' product.id %}" class="btn btn-warning">Редактировать</a>
                         <a href="{% url 'delete_product' product.id %}" class="btn btn-danger">Удалить</a>
                     {% else %}
-                        <!-- Кнопки для обычного пользователя -->
                         <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success">Добавить в корзину</a>
                         <a href="{% url 'checkout' %}?product_id={{ product.id }}" class="btn btn-primary">Купить</a>
                     {% endif %}
                 {% else %}
                     <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-success">Добавить в корзину</a>
                     <a href="{% url 'login' %}?next={% url 'checkout' %}?product_id={{ product.id }}" class="btn btn-primary">Купить</a>
+                {% endif %}
+            </div>
+
+            <!-- Рейтинг товара -->
+            <div class="mt-4">
+                <h5>Рейтинг: {{ product.average_rating|floatformat:2 }}</h5> <!-- Выводим рейтинг с 2 знаками после запятой -->
+                <div>
+                    {% for i in rating_range %}
+                        {% if i <= product.average_rating %}
+                            &#9733; <!-- Звезда заполнена -->
+                        {% else %}
+                            &#9734; <!-- Пустая звезда -->
+                        {% endif %}
+                    {% endfor %}
+                    <span>({{ product.reviews.count }} отзыва)</span>
+                </div>
+            </div>
+
+            <!-- Форма для оставления отзыва -->
+            {% if user.is_authenticated %}
+                {% if can_leave_review %}
+                    <h5 class="mt-4">Оставьте свой отзыв</h5>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="rating">Рейтинг:</label>
+                            <select name="rating" id="rating" class="form-control" required>
+                                <option value="1">1 - Очень плохо</option>
+                                <option value="2">2 - Плохо</option>
+                                <option value="3">3 - Нормально</option>
+                                <option value="4">4 - Хорошо</option>
+                                <option value="5">5 - Отлично</option>
+                            </select>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label for="comment">Комментарий:</label>
+                            <textarea name="comment" id="comment" class="form-control" rows="4"></textarea> <!-- Убираем "required" -->
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">Отправить отзыв</button>
+                    </form>
+                {% else %}
+                    <p class="mt-4">Вы не можете оставить отзыв для этого товара.</p>
+                {% endif %}
+            {% else %}
+                <p class="mt-4">Чтобы оставить отзыв, необходимо <a href="{% url 'login' %}">войти</a>.</p>
+            {% endif %}
+
+            <!-- Отзывы -->
+            <div class="mt-4">
+                <h5>Отзывы:</h5>
+                {% if page_obj.has_other_pages %}
+                    <ul class="list-unstyled">
+                        {% for review in page_obj.object_list %}
+                        <li class="border-bottom mb-3 pb-2">
+                            <div>
+                                <strong>{{ review.user.username }}</strong>
+                                <div>
+                                    {% for i in rating_range %}
+                                        {% if i <= review.rating %}
+                                            &#9733; <!-- Звезда заполнена -->
+                                        {% else %}
+                                            &#9734; <!-- Пустая звезда -->
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <p>{{ review.comment }}</p>
+                            <small>Отзыв оставлен {{ review.created_at }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <!-- Пагинация -->
+                    <div class="pagination">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary">Назад</a>
+                        {% endif %}
+                        <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary">Вперед</a>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <p>Отзывов пока нет.</p>
                 {% endif %}
             </div>
         </div>

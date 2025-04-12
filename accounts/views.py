@@ -4,7 +4,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from .forms import UserRegisterForm, UserProfileForm, ProductForm, CategoryForm, PickupPointForm
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Cart, UserProfile, Product, Category, User, PickupPoint, Order, OrderProduct, Notification
+from .models import Cart, UserProfile, Product, Category, User, PickupPoint, Order, OrderProduct, Notification, Review
 from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.models import User
@@ -308,10 +308,52 @@ def delete_pickup_point(request, pk):
     pickup_point.delete()
     return redirect('add_pickup_point')
 
+
+
 # ПРЕДСТВЛЕНИЕ ТОВАРА
 def product_detail(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
-    return render(request, 'product_detail.html', {'product': product})
+    reviews = product.reviews.all().order_by('-created_at')  # Сортируем отзывы по дате создания (новые сверху)
+
+    can_leave_review = False
+    if request.user.is_authenticated:
+        orders_with_product = Order.objects.filter(user=request.user, status='ready for pickup')
+        for order in orders_with_product:
+            if order.orderproduct_set.filter(product=product).exists():
+                can_leave_review = True
+                break
+
+    if request.method == 'POST' and can_leave_review:
+        rating = int(request.POST.get('rating'))
+        comment = request.POST.get('comment')
+
+        review = Review.objects.create(
+            product=product,
+            user=request.user,
+            rating=rating,
+            comment=comment
+        )
+
+        reviews_count = product.reviews.count()
+        total_rating = sum(review.rating for review in reviews) + rating
+        product.average_rating = total_rating / (reviews_count + 1)
+        product.save()
+
+        return redirect('product_detail', product_id=product.id)
+
+    # Пагинация отзывов
+    paginator = Paginator(reviews, 5)  # По 5 отзывов на страницу
+    page_number = request.GET.get('page')  # Получаем номер страницы из GET-запроса
+    page_obj = paginator.get_page(page_number)  # Получаем объект страницы
+
+    return render(request, 'product_detail.html', {
+        'product': product,
+        'page_obj': page_obj,  # Передаем объект страницы
+        'can_leave_review': can_leave_review,
+        'rating_range': range(1, 6)
+    })
+
+
 
 # ОФОРМЛЕНИЕ ЗАКАЗА
 @login_required
@@ -512,7 +554,6 @@ def user_info_view(request):
 
 def privacy_policy(request):
     return render(request, 'accounts/privacy_policy.html')
-
 
 # ДОСТАВКА
 @login_required
