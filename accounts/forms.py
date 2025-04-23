@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from .models import UserProfile, Product, Category, PickupPoint
+from .models import UserProfile, Product, Category, PickupPoint, Subcategory
 
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -28,20 +28,43 @@ class UserProfileForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'price', 'parameter_1', 'parameter_2', 'parameter_3', 'parameter_4', 'parameter_5', 'category', 'image', 'description', 'stock_quantity']
+        fields = [
+            'name', 'price', 'parameter_1', 'parameter_2', 'parameter_3',
+            'parameter_4', 'parameter_5', 'category', 'subcategory',  # <-- Подкатегория здесь!
+            'image', 'description', 'stock_quantity'
+        ]
 
     category = forms.ModelChoiceField(
-        queryset=Category.objects.all(), 
-        required=True, 
+        queryset=Category.objects.all(),
+        required=True,
         empty_label="Выберите категорию",
-        widget=forms.Select(attrs={"class": "form-control"})
+        widget=forms.Select(attrs={"class": "form-control", "id": "id_category"})
     )
 
+    subcategory = forms.ModelChoiceField(
+        queryset=Subcategory.objects.all(),
+        required=False,
+        empty_label="Выберите подкатегорию",
+        widget=forms.Select(attrs={"class": "form-control", "id": "id_subcategory"})
+    )
+    
 
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
         fields = ['name']
+
+class SubcategoryForm(forms.ModelForm):
+    class Meta:
+        model = Subcategory
+        fields = ['name', 'category']  # Поля для названия подкатегории и выбора категории
+
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.all(),
+        required=True,
+        empty_label="Выберите категорию",
+        widget=forms.Select(attrs={"class": "form-control"})
+    )
 
 
 from django import forms

@@ -4,7 +4,6 @@ from django.conf import settings
 from django.conf.urls.static import static
 from .views import add_product, add_category, checkout_view, view_cart, edit_product, delete_product, add_pickup_point
 
-
 urlpatterns = [
     path('', views.home, name='home'),
     path('register/', views.register, name='register'),
@@ -12,7 +11,8 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile, name='profile'),
     path('accounts/add_product/', add_product, name='add_product'),
-    path("add_category/", add_category, name="add_category"),
+    path('add_category/', views.add_category, name='add_category'),
+    path('add_subcategory/', views.add_subcategory, name='add_subcategory'),
     path('add_to_cart/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
     path('product/edit/<int:product_id>/', edit_product, name='edit_product'),
     path('product/delete/<int:product_id>/', delete_product, name='delete_product'),
@@ -35,6 +35,7 @@ urlpatterns = [
     path('user_info/', views.user_info_view, name='user_info'),
     path('privacy_policy/', views.privacy_policy, name='privacy_policy'),
     path('purchases/', views.purchases_view, name='purchases'),
+    path('get_subcategories/<int:category_id>/', views.get_subcategories, name='get_subcategories'),
     ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

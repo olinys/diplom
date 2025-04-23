@@ -21,6 +21,14 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class Subcategory(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="subcategories", verbose_name="Категория")
+    name = models.CharField(max_length=255, verbose_name="Название подкатегории")
+
+    def __str__(self):
+        return self.name
 
 class Product(models.Model):
     name = models.CharField(max_length=255, verbose_name="Название")
@@ -31,10 +39,11 @@ class Product(models.Model):
     parameter_4 = models.CharField(max_length=255, blank=True, verbose_name="Параметр 4")
     parameter_5 = models.CharField(max_length=255, blank=True, verbose_name="Параметр 5")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Категория")
+    subcategory = models.ForeignKey(Subcategory, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="Подкатегория")  # <-- Добавили
     sku = models.CharField(max_length=50, unique=True, verbose_name="Артикул", blank=True)
     image = models.ImageField(upload_to="product_images/", blank=True, null=True, verbose_name="Изображение")
-    description = models.TextField(blank=True, null=True, verbose_name="Описание")  # Новое поле для описания
-    stock_quantity = models.PositiveIntegerField(default=0, verbose_name="Количество в наличии")  # Новое поле для количества товара
+    description = models.TextField(blank=True, null=True, verbose_name="Описание")
+    stock_quantity = models.PositiveIntegerField(default=0, verbose_name="Количество в наличии")
     average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
 
     def save(self, *args, **kwargs):
@@ -46,9 +55,10 @@ class Product(models.Model):
             else:
                 self.sku = str(base_sku)
         super().save(*args, **kwargs)
-        
+
     def __str__(self):
         return self.name
+
     
 
 class Review(models.Model):

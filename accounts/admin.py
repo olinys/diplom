@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, Category, Order, UserProfile, Cart, PickupPoint, Notification
+from .models import Product, Category, Order, UserProfile, Cart, PickupPoint, Notification, Review
 import logging
 
 # Регистрируем модели в админке
@@ -9,6 +9,7 @@ admin.site.register(UserProfile)
 admin.site.register(Cart)
 admin.site.register(PickupPoint)
 admin.site.register(Notification)
+admin.site.register(Review)
 
 # Логгер для отслеживания создания уведомлений
 logger = logging.getLogger(__name__)

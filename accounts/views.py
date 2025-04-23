@@ -2,9 +2,9 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
-from .forms import UserRegisterForm, UserProfileForm, ProductForm, CategoryForm, PickupPointForm
+from .forms import UserRegisterForm, UserProfileForm, ProductForm, CategoryForm, PickupPointForm, SubcategoryForm
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Cart, UserProfile, Product, Category, User, PickupPoint, Order, OrderProduct, Notification, Review
+from .models import Cart, UserProfile, Product, Category, User, PickupPoint, Order, OrderProduct, Notification, Review, Subcategory
 from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.models import User
@@ -84,7 +84,7 @@ def add_product(request):
         product_form = ProductForm(request.POST, request.FILES)
         if product_form.is_valid():
             product_form.save()
-            return redirect("home")  # Перенаправление на главную страницу
+            return redirect("home")
     else:
         product_form = ProductForm()
 
@@ -97,11 +97,31 @@ def add_category(request):
         category_form = CategoryForm(request.POST)
         if category_form.is_valid():
             category_form.save()
-            return redirect("add_product") 
+            # После добавления категории перенаправляем на страницу добавления подкатегории
+            return redirect('add_subcategory')
     else:
         category_form = CategoryForm()
 
     return render(request, "accounts/add_category.html", {"category_form": category_form})
+
+@user_passes_test(is_admin)
+def add_subcategory(request):
+    if request.method == "POST":
+        subcategory_form = SubcategoryForm(request.POST)
+        if subcategory_form.is_valid():
+            subcategory_form.save()
+            # После добавления подкатегории остаемся на той же странице
+            return redirect('add_subcategory')
+    else:
+        subcategory_form = SubcategoryForm()
+
+    return render(request, "accounts/add_subcategory.html", {"subcategory_form": subcategory_form})
+
+
+@user_passes_test(is_admin)
+def get_subcategories(request, category_id):
+    subcategories = Subcategory.objects.filter(category_id=category_id).values('id', 'name')
+    return JsonResponse({'subcategories': list(subcategories)})
 
 # ОТОБРАЖЕНИЕ ТОВАРОВ НА ГЛАВНОЙ СТРАНИЦК
 def home(request):
