@@ -28,26 +28,22 @@ class UserProfileForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = [
-            'name', 'price', 'parameter_1', 'parameter_2', 'parameter_3',
-            'parameter_4', 'parameter_5', 'category', 'subcategory',  # <-- Подкатегория здесь!
-            'image', 'description', 'stock_quantity'
-        ]
+        fields = '__all__'
 
-    category = forms.ModelChoiceField(
-        queryset=Category.objects.all(),
-        required=True,
-        empty_label="Выберите категорию",
-        widget=forms.Select(attrs={"class": "form-control", "id": "id_category"})
-    )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['subcategory'].queryset = Subcategory.objects.none()
 
-    subcategory = forms.ModelChoiceField(
-        queryset=Subcategory.objects.all(),
-        required=False,
-        empty_label="Выберите подкатегорию",
-        widget=forms.Select(attrs={"class": "form-control", "id": "id_subcategory"})
-    )
-    
+        if 'category' in self.data:
+            try:
+                category_id = int(self.data.get('category'))
+                self.fields['subcategory'].queryset = Subcategory.objects.filter(category_id=category_id).order_by('name')
+            except (ValueError, TypeError):
+                pass
+        elif self.instance.pk and self.instance.category:
+            self.fields['subcategory'].queryset = Subcategory.objects.filter(category=self.instance.category).order_by('name')
+
+
 
 class CategoryForm(forms.ModelForm):
     class Meta:

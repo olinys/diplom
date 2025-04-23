@@ -16,28 +16,39 @@
     <a href="{% url 'add_category' %}" class="btn btn-secondary">Добавить категорию</a>
 </div>
 {% endblock %}
-
-
+{% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const categorySelect = document.querySelector('[name="category"]');
         const subcategorySelect = document.querySelector('[name="subcategory"]');
         
-        categorySelect.addEventListener('change', function() {
-            const categoryId = categorySelect.value;
-            
-            if (categoryId) {
-                fetch(`/get_subcategories/${categoryId}/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
-                        data.subcategories.forEach(subcategory => {
-                            subcategorySelect.innerHTML += `<option value="${subcategory.id}">${subcategory.name}</option>`;
+        if (categorySelect && subcategorySelect) {
+            categorySelect.addEventListener('change', function() {
+                const categoryId = this.value;
+                
+                subcategorySelect.innerHTML = '<option value="">Загрузка...</option>';
+                
+                if (categoryId) {
+                    fetch(`/accounts/get_subcategories/${categoryId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
+                            data.subcategories.forEach(subcategory => {
+                                const option = document.createElement('option');
+                                option.value = subcategory.id;
+                                option.textContent = subcategory.name;
+                                subcategorySelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Ошибка загрузки подкатегорий:', error);
+                            subcategorySelect.innerHTML = '<option value="">Ошибка загрузки</option>';
                         });
-                    });
-            } else {
-                subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
-            }
-        });
+                } else {
+                    subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
+                }
+            });
+        }
     });
 </script>
+{% endblock %}
