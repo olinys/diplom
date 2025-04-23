@@ -250,6 +250,7 @@ def update_cart_item(request, product_id):
 # ПРОСМОТР КАТАЛОГА
 def catalog_view(request, category_id=None, subcategory_id=None):
     categories = Category.objects.all()
+    sort = request.GET.get('sort')
 
     if subcategory_id:
         products = Product.objects.filter(subcategory_id=subcategory_id)
@@ -257,6 +258,16 @@ def catalog_view(request, category_id=None, subcategory_id=None):
         products = Product.objects.filter(category_id=category_id)
     else:
         products = Product.objects.all()
+
+    # Применяем сортировку
+    if sort == 'price_asc':
+        products = products.order_by('price')
+    elif sort == 'price_desc':
+        products = products.order_by('-price')
+    elif sort == 'rating_asc':
+        products = products.order_by('average_rating')
+    elif sort == 'rating_desc':
+        products = products.order_by('-average_rating')
 
     subcategories = None
     if category_id:
@@ -267,20 +278,52 @@ def catalog_view(request, category_id=None, subcategory_id=None):
         'products': products,
         'subcategories': subcategories,
         'current_category_id': category_id,
+        'current_subcategory_id': subcategory_id,
+        'current_sort': sort,
     })
+
 
 # ПОИСКОВАЯ СТРОКА
 def product_search(request):
     query = request.GET.get('q')
+    sort = request.GET.get('sort')
+    category_id = request.GET.get('category')
+    subcategory_id = request.GET.get('subcategory')
+
     results = []
+    categories = Category.objects.all()
+    subcategories = Subcategory.objects.filter(category_id=category_id) if category_id else Subcategory.objects.none()
+
     if query:
         results = Product.objects.filter(
             Q(name__icontains=query) | Q(sku__icontains=query)
         )
+
+        if category_id:
+            results = results.filter(category_id=category_id)
+
+        if subcategory_id:
+            results = results.filter(subcategory_id=subcategory_id)
+
+        if sort == 'price_asc':
+            results = results.order_by('price')
+        elif sort == 'price_desc':
+            results = results.order_by('-price')
+        elif sort == 'rating_asc':
+            results = results.order_by('average_rating')
+        elif sort == 'rating_desc':
+            results = results.order_by('-average_rating')
+
     return render(request, 'accounts/search_results.html', {
         'query': query,
-        'results': results
+        'results': results,
+        'current_sort': sort,
+        'current_category': category_id,
+        'current_subcategory': subcategory_id,
+        'categories': categories,
+        'subcategories': subcategories,
     })
+
 
 
 # ПРОСМОТР АКТИВНОСТЕЙ ПОЛЬЗОВАТЕЛЕЙ

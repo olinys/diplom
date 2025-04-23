@@ -24,6 +24,24 @@
     </div>
     {% endif %}
 
+    <!-- Сортировка -->
+    <form method="get" class="mb-4">
+        <div class="row g-2 align-items-center">
+            <div class="col-auto">
+                <label for="sort" class="col-form-label">Сортировать:</label>
+            </div>
+            <div class="col-auto">
+                <select class="form-select" id="sort" name="sort" onchange="this.form.submit()">
+                    <option value="" {% if not current_sort %}selected{% endif %}>Без сортировки</option>
+                    <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Цена: по возрастанию</option>
+                    <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Цена: по убыванию</option>
+                    <option value="rating_asc" {% if current_sort == 'rating_asc' %}selected{% endif %}>Рейтинг: по возрастанию</option>
+                    <option value="rating_desc" {% if current_sort == 'rating_desc' %}selected{% endif %}>Рейтинг: по убыванию</option>
+                </select>
+            </div>
+        </div>
+    </form>
+
     <div class="mt-4">
         <h3>Товары</h3>
         {% if products %}

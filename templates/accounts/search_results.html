@@ -1,12 +1,60 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<a href="{% url 'home' %}" class="btn btn-outline-secondary mb-3">
-    ← Назад
-</a>
+<a href="{% url 'home' %}" class="btn btn-outline-secondary mb-3">← Назад</a>
 
 <h2>Результаты поиска по запросу: "{{ query }}"</h2>
 
+<!-- Форма сортировки и фильтрации -->
+<form method="get" class="mb-4">
+    <input type="hidden" name="q" value="{{ query }}">
+    <div class="row g-3 align-items-center">
+        <div class="col-auto">
+            <label for="sort" class="col-form-label">Сортировать:</label>
+        </div>
+        <div class="col-auto">
+            <select class="form-select" id="sort" name="sort" onchange="this.form.submit()">
+                <option value="" {% if not current_sort %}selected{% endif %}>Без сортировки</option>
+                <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Цена: по возрастанию</option>
+                <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Цена: по убыванию</option>
+                <option value="rating_asc" {% if current_sort == 'rating_asc' %}selected{% endif %}>Рейтинг: по возрастанию</option>
+                <option value="rating_desc" {% if current_sort == 'rating_desc' %}selected{% endif %}>Рейтинг: по убыванию</option>
+            </select>
+        </div>
+
+        <div class="col-auto">
+            <label for="category" class="col-form-label">Категория:</label>
+        </div>
+        <div class="col-auto">
+            <select class="form-select" id="category" name="category" onchange="this.form.submit()">
+                <option value="" {% if not current_category %}selected{% endif %}>Все категории</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category.id|stringformat:"s" == current_category %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if subcategories %}
+        <div class="col-auto">
+            <label for="subcategory" class="col-form-label">Подкатегория:</label>
+        </div>
+        <div class="col-auto">
+            <select class="form-select" id="subcategory" name="subcategory" onchange="this.form.submit()">
+                <option value="" {% if not current_subcategory %}selected{% endif %}>Все подкатегории</option>
+                {% for subcategory in subcategories %}
+                    <option value="{{ subcategory.id }}" {% if subcategory.id|stringformat:"s" == current_subcategory %}selected{% endif %}>
+                        {{ subcategory.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+    </div>
+</form>
+
+<!-- Результаты -->
 {% if results %}
 <div class="row">
     {% for product in results %}
@@ -23,7 +71,7 @@
         let resultsContainer = document.getElementById('autocomplete-results');
 
         if (query.length > 0) {
-            fetch(`/search/autocomplete/?q=${query}`)
+            fetch(`/search/autocomplete/?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     resultsContainer.innerHTML = '';
