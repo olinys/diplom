@@ -28,7 +28,7 @@ class UserProfileForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ['name', 'price', 'parameter_1', 'parameter_2', 'parameter_3', 'parameter_4', 'parameter_5', 'category', 'subcategory', 'image', 'description', 'stock_quantity']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

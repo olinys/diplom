@@ -248,17 +248,25 @@ def update_cart_item(request, product_id):
     return HttpResponseBadRequest("Invalid request method.")
 
 # ПРОСМОТР КАТАЛОГА
-def catalog_view(request, category_id=None):
+def catalog_view(request, category_id=None, subcategory_id=None):
     categories = Category.objects.all()
 
-    if category_id:
+    if subcategory_id:
+        products = Product.objects.filter(subcategory_id=subcategory_id)
+    elif category_id:
         products = Product.objects.filter(category_id=category_id)
     else:
         products = Product.objects.all()
-        
+
+    subcategories = None
+    if category_id:
+        subcategories = Subcategory.objects.filter(category_id=category_id)
+
     return render(request, 'accounts/catalog.html', {
         'categories': categories,
-        'products': products
+        'products': products,
+        'subcategories': subcategories,
+        'current_category_id': category_id,
     })
 
 # ПОИСКОВАЯ СТРОКА
