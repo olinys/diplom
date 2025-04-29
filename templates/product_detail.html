@@ -11,17 +11,17 @@
         </div>
         <div class="col-md-6">
             <h2>{{ product.name }}</h2>
-            <p><strong>Цена:</strong> {{ product.price }} руб.</p>
+            <p><strong>Цена:</strong> {{ product.price }} BYN.</p>
             <p><strong>Категория:</strong> {{ product.category.name }}</p>
             <p><strong>Подкатегория:</strong> {{ product.subcategory.name }}</p>
             <p><strong>Артикул:</strong> {{ product.sku }}</p>
             <p><strong>Описание:</strong> {{ product.description }}</p>
-            <p><strong>Параметр 1:</strong> {{ product.parameter_1 }}</p>
-            <p><strong>Параметр 2:</strong> {{ product.parameter_2 }}</p>
-            <p><strong>Параметр 3:</strong> {{ product.parameter_3 }}</p>
-            <p><strong>Параметр 4:</strong> {{ product.parameter_4 }}</p>
-            <p><strong>Параметр 5:</strong> {{ product.parameter_5 }}</p>
-            <p><strong>В наличии:</strong> {{ product.stock_quantity }} шт.</p>
+            <p><strong></strong> {{ product.parameter_1 }}</p>
+            <p><strong></strong> {{ product.parameter_2 }}</p>
+            <p><strong></strong> {{ product.parameter_3 }}</p>
+            <p><strong></strong> {{ product.parameter_4 }}</p>
+            <p><strong></strong> {{ product.parameter_5 }}</p>
+            <p><strong></strong> {{ product.stock_quantity }} шт.</p>
 
             <div class="mt-4 d-flex gap-2">
                 {% if user.is_authenticated %}
