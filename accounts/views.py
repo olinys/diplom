@@ -98,7 +98,7 @@ def add_category(request):
         if category_form.is_valid():
             category_form.save()
             # После добавления категории перенаправляем на страницу добавления подкатегории
-            return redirect('add_category')
+            return redirect('add_subcategory')
     else:
         category_form = CategoryForm()
 
