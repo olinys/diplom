@@ -29,17 +29,100 @@ class Subcategory(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class Memory(models.Model):
+    value = models.CharField(max_length=50, verbose_name="Память (GB)",unique=True, default='128')
+
+    def __str__(self):
+        return self.value
+
+class RAM(models.Model):
+    value = models.CharField(max_length=50, verbose_name="ОЗУ (GB)",unique=True, default='8')
+
+    def __str__(self):
+        return self.value
+
+class CoreCount(models.Model):
+    value = models.CharField(max_length=20, verbose_name="Количество ядер",unique=True, default='4')
+
+    def __str__(self):
+        return self.value
+
+class Color(models.Model):
+    name = models.CharField(max_length=50, verbose_name="Цвет",unique=True, default='Черный')
+
+    def __str__(self):
+        return self.name
+
+class ScreenDiagonal(models.Model):
+    value = models.CharField(max_length=50, verbose_name="Диагональ экрана (дюймы)",unique=True, default='6.7')
+
+    def __str__(self):
+        return self.value
+
+class BatteryCapacity(models.Model):
+    value = models.CharField(max_length=50, verbose_name="Емкость аккумулятора (мАч)",unique=True, default='5000')
+
+    def __str__(self):
+        return self.value
+
+class OperatingSystem(models.Model):
+    name = models.CharField(max_length=50, verbose_name="Операционная система",unique=True, default='Не установлена')
+
+    def __str__(self):
+        return self.name
+
+class Camera(models.Model):
+    value = models.CharField(max_length=50, verbose_name="Камера (Мп)",unique=True, default='12')
+
+    def __str__(self):
+        return self.value
+
+class Processor(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Процессор",unique=True, default='Intel core i5')
+
+    def __str__(self):
+        return self.name
+
+class ConnectorType(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Разъем",unique=True, default='Type-C')
+
+    def __str__(self):
+        return self.name
+
+class ConnectionType(models.Model):
+    type = models.CharField(max_length=50, verbose_name="Тип подключения",unique=True, default='Беспроводные')
+
+    def __str__(self):
+        return self.type
+
+class CpuFrequency(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Частота процессора (Гц)", unique=True, default='2400')
+
+    def __str__(self):
+        return self.name
 
 class Product(models.Model):
     name = models.CharField(max_length=255, verbose_name="Название")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена")
-    parameter_1 = models.CharField(max_length=255, blank=True, verbose_name="Параметр 1")
-    parameter_2 = models.CharField(max_length=255, blank=True, verbose_name="Параметр 2")
-    parameter_3 = models.CharField(max_length=255, blank=True, verbose_name="Параметр 3")
-    parameter_4 = models.CharField(max_length=255, blank=True, verbose_name="Параметр 4")
-    parameter_5 = models.CharField(max_length=255, blank=True, verbose_name="Параметр 5")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Категория")
-    subcategory = models.ForeignKey(Subcategory, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="Подкатегория")  # <-- Добавили
+    subcategory = models.ForeignKey(Subcategory, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="Подкатегория")
+
+    memory = models.ForeignKey(Memory, on_delete=models.SET_NULL, null=True, blank=True)
+    ram = models.ForeignKey(RAM, on_delete=models.SET_NULL, null=True, blank=True)
+    core_count = models.ForeignKey(CoreCount, on_delete=models.SET_NULL, null=True, blank=True)
+    color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True)
+    screen_diagonal = models.ForeignKey(ScreenDiagonal, on_delete=models.SET_NULL, null=True, blank=True)
+    battery_capacity = models.ForeignKey(BatteryCapacity, on_delete=models.SET_NULL, null=True, blank=True)
+    operating_system = models.ForeignKey(OperatingSystem, on_delete=models.SET_NULL, null=True, blank=True)
+    main_camera = models.ForeignKey(Camera, on_delete=models.SET_NULL, null=True, blank=True, related_name='main_camera')
+    front_camera = models.ForeignKey(Camera, on_delete=models.SET_NULL, null=True, blank=True, related_name='front_camera')
+    cpu_frequency = models.ForeignKey(CpuFrequency, on_delete=models.SET_NULL, null=True, blank=True)
+    processor = models.ForeignKey(Processor, on_delete=models.SET_NULL, null=True, blank=True)
+    connector_type = models.ForeignKey(ConnectorType, on_delete=models.SET_NULL, null=True, blank=True)
+    connection_type = models.ForeignKey(ConnectionType, on_delete=models.SET_NULL, null=True, blank=True)
+
     sku = models.CharField(max_length=50, unique=True, verbose_name="Артикул", blank=True)
     image = models.ImageField(upload_to="product_images/", blank=True, null=True, verbose_name="Изображение")
     description = models.TextField(blank=True, null=True, verbose_name="Описание")
@@ -49,7 +132,7 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         if not self.sku:
             last_product = Product.objects.order_by('-id').first()
-            base_sku = 10000000
+            base_sku = 1000
             if last_product and last_product.sku.isdigit():
                 self.sku = str(int(last_product.sku) + 1)
             else:
@@ -57,9 +140,7 @@ class Product(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.name
-
-    
+        return self.name    
 
 class Review(models.Model):
     product = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)

@@ -4,7 +4,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from .forms import UserRegisterForm, UserProfileForm, ProductForm, CategoryForm, PickupPointForm, SubcategoryForm
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Cart, UserProfile, Product, Category, User, PickupPoint, Order, OrderProduct, Notification, Review, Subcategory
+from .models import Cart, UserProfile, Product, Category, User, PickupPoint, Order, OrderProduct, Notification, Review, Subcategory, Processor, OperatingSystem, ConnectionType, Color, ConnectorType, Memory, RAM, CoreCount, ScreenDiagonal, BatteryCapacity, Camera
 from django.contrib import messages
 from django.db.models import Q
 from django.contrib.auth.models import User
@@ -83,7 +83,31 @@ def add_product(request):
     if request.method == "POST":
         product_form = ProductForm(request.POST, request.FILES)
         if product_form.is_valid():
-            product_form.save()
+            product = product_form.save(commit=False)
+
+            # Загрузите или создайте новые параметры
+            model_mapping = {
+                'memory': Memory,
+                'ram': RAM,
+                'core_count': CoreCount,
+                'color': Color,
+                'screen_diagonal': ScreenDiagonal,
+                'battery_capacity': BatteryCapacity,
+                'operating_system': OperatingSystem,
+                'main_camera': Camera,
+                'front_camera': Camera,
+                'processor': Processor,
+                'connector_type': ConnectorType,
+                'connection_type': ConnectionType
+            }
+
+            for field, model in model_mapping.items():
+                value = request.POST.get(field)
+                if value:
+                    obj, created = model.objects.get_or_create(value=value)  # создаем или получаем объект
+                    setattr(product, field, obj)
+
+            product.save()
             return redirect("home")
     else:
         product_form = ProductForm()
@@ -118,11 +142,16 @@ def add_subcategory(request):
     return render(request, "accounts/add_subcategory.html", {"subcategory_form": subcategory_form})
 
 
+
 @user_passes_test(is_admin)
 def get_subcategories(request, category_id):
-    subcategories = Subcategory.objects.filter(category_id=category_id).values('id', 'name')
-    return JsonResponse({'subcategories': list(subcategories)})
-
+    try:
+        subcategories = Subcategory.objects.filter(category_id=category_id)
+        subcategory_data = [{'id': sub.id, 'name': sub.name} for sub in subcategories]
+        return JsonResponse({'subcategories': subcategory_data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+        
 # ОТОБРАЖЕНИЕ ТОВАРОВ НА ГЛАВНОЙ СТРАНИЦК
 def home(request):
     products = Product.objects.all()

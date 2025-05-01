@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from .models import UserProfile, Product, Category, PickupPoint, Subcategory
+from .models import UserProfile, Product, Category, PickupPoint, Subcategory, Camera, Memory, RAM, CoreCount, Color, ScreenDiagonal, BatteryCapacity, OperatingSystem, Processor, ConnectionType, ConnectorType
 
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -25,13 +25,24 @@ class UserProfileForm(forms.ModelForm):
         fields = ['first_name', 'last_name', 'phone_number', 'birth_date', 'gender', 'delivery_address', 'profile_picture']
 
 
+from django import forms
+from .models import Product, Subcategory
+
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'price', 'parameter_1', 'parameter_2', 'parameter_3', 'parameter_4', 'parameter_5', 'category', 'subcategory', 'image', 'description', 'stock_quantity']
+        fields = [
+            'name', 'price', 'category', 'subcategory',
+            'memory', 'ram', 'core_count', 'color', 'screen_diagonal',
+            'battery_capacity', 'operating_system', 'main_camera', 'front_camera',
+            'cpu_frequency', 'processor', 'connector_type', 'connection_type',
+            'image', 'description', 'stock_quantity'
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        # Динамическая загрузка подкатегорий
         self.fields['subcategory'].queryset = Subcategory.objects.none()
 
         if 'category' in self.data:
@@ -43,6 +54,27 @@ class ProductForm(forms.ModelForm):
         elif self.instance.pk and self.instance.category:
             self.fields['subcategory'].queryset = Subcategory.objects.filter(category=self.instance.category).order_by('name')
 
+        # Загрузка значений для параметров
+        self.fields['memory'].queryset = Memory.objects.all()
+        self.fields['ram'].queryset = RAM.objects.all()
+        self.fields['core_count'].queryset = CoreCount.objects.all()
+        self.fields['color'].queryset = Color.objects.all()
+        self.fields['screen_diagonal'].queryset = ScreenDiagonal.objects.all()
+        self.fields['battery_capacity'].queryset = BatteryCapacity.objects.all()
+        self.fields['operating_system'].queryset = OperatingSystem.objects.all()
+        self.fields['main_camera'].queryset = Camera.objects.all()
+        self.fields['front_camera'].queryset = Camera.objects.all()
+        self.fields['processor'].queryset = Processor.objects.all()
+        self.fields['connector_type'].queryset = ConnectorType.objects.all()
+        self.fields['connection_type'].queryset = ConnectionType.objects.all()
+
+        # Включение возможности добавления новых значений для параметров через Select2
+        for field in ['memory', 'ram', 'core_count', 'color', 'screen_diagonal', 'battery_capacity', 
+                      'operating_system', 'main_camera', 'front_camera', 'processor', 'connector_type', 'connection_type']:
+            self.fields[field].widget.attrs.update({
+                'class': 'select2',
+                'data-placeholder': f"Выберите {self.fields[field].label.lower()}",
+            })
 
 
 class CategoryForm(forms.ModelForm):
