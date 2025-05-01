@@ -37,6 +37,7 @@ urlpatterns = [
     path('privacy_policy/', views.privacy_policy, name='privacy_policy'),
     path('purchases/', views.purchases_view, name='purchases'),
     path('get_subcategories/<int:category_id>/', views.get_subcategories, name='get_subcategories'),
+    path('add_parameter_value/', views.add_parameter_value, name='add_parameter_value'),
     ]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

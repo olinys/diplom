@@ -4,9 +4,38 @@
 <div class="container mt-5">
     <h2>Редактировать товар: {{ product.name }}</h2>
     
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" id="product-form">
         {% csrf_token %}
-        {{ form.as_p }}
+        
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                
+                {% if field.field.widget.input_type == 'select' %}
+                    {% if field.name == 'category' or field.name == 'subcategory' %}
+                        {{ field }}
+                    {% else %}
+                        <div class="input-group mb-3">
+                            {{ field }}
+                            <div class="input-group-append">
+                                <input type="text" class="form-control param-input" 
+                                       placeholder="Новое значение" 
+                                       data-model="{{ field.name }}"
+                                       data-target="#{{ field.id_for_label }}">
+                                <button type="button" class="btn btn-outline-secondary add-param-btn" 
+                                        data-model="{{ field.name }}"
+                                        data-target="#{{ field.id_for_label }}">
+                                    Добавить
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    {{ field }}
+                {% endif %}
+            </div>
+        {% endfor %}
+        
         <button type="submit" class="btn btn-primary">Сохранить изменения</button>
         <a href="{% url 'home' %}" class="btn btn-secondary">Отмена</a>
     </form>
@@ -16,6 +45,7 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Обработчик для категорий и подкатегорий
         const categorySelect = document.querySelector('[name="category"]');
         const subcategorySelect = document.querySelector('[name="subcategory"]');
         
@@ -36,6 +66,12 @@
                                 option.textContent = subcategory.name;
                                 subcategorySelect.appendChild(option);
                             });
+                            
+                            // Установка текущего значения подкатегории после загрузки
+                            const currentSubcategoryId = '{{ form.instance.subcategory.id|default:"" }}';
+                            if (currentSubcategoryId) {
+                                subcategorySelect.value = currentSubcategoryId;
+                            }
                         })
                         .catch(error => {
                             console.error('Ошибка загрузки подкатегорий:', error);
@@ -45,7 +81,76 @@
                     subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
                 }
             });
+            
+            // Инициализация подкатегорий при загрузке
+            if (categorySelect.value) {
+                categorySelect.dispatchEvent(new Event('change'));
+            }
         }
+        
+        // Обработчики для добавления параметров
+        document.querySelectorAll('.add-param-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const model = this.dataset.model;
+                const target = this.dataset.target;
+                const input = this.previousElementSibling;
+                const value = input.value.trim();
+                
+                if (!value) {
+                    alert('Пожалуйста, введите значение');
+                    return;
+                }
+                
+                // Показать индикатор загрузки
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+                
+                fetch('/accounts/add_parameter_value/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        value: value
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Добавляем новую опцию в select
+                        const select = document.querySelector(target);
+                        const option = new Option(data.value, data.id);
+                        select.add(option);
+                        select.value = data.id;
+                        
+                        // Очищаем поле ввода
+                        input.value = '';
+                    } else {
+                        alert('Ошибка: ' + (data.error || 'Не удалось добавить значение'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при сохранении');
+                })
+                .finally(() => {
+                    this.disabled = false;
+                    this.textContent = 'Добавить';
+                });
+            });
+        });
+        
+        // Обработчик Enter в полях ввода
+        document.querySelectorAll('.param-input').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.nextElementSibling.click();
+                }
+            });
+        });
     });
 </script>
 {% endblock %}

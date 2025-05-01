@@ -7,109 +7,130 @@
 <div class="container mt-5">
     <div class="row">
         <div class="col-md-6 d-flex justify-content-center">
-            <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}" style="max-height: 400px; object-fit: contain;">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}"
+                style="max-height: 400px; object-fit: contain;">
+            {% else %}
+            <div class="no-image"
+                style="width: 100%; height: 400px; background: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+                <span>Изображение отсутствует</span>
+            </div>
+            {% endif %}
         </div>
         <div class="col-md-6">
             <h2>{{ product.name }}</h2>
-            <p><strong>Цена:</strong> {{ product.price }} BYN.</p>
+            <p><strong>Цена:</strong> {{ product.price }} BYN</p>
             <p><strong>Категория:</strong> {{ product.category.name }}</p>
+            {% if product.subcategory %}
             <p><strong>Подкатегория:</strong> {{ product.subcategory.name }}</p>
+            {% endif %}
             <p><strong>Артикул:</strong> {{ product.sku }}</p>
-            <p><strong>Описание:</strong> {{ product.description }}</p>
-            <p><strong>Параметр 1:</strong> {{ product.parameter_1 }}</p>
-            <p><strong>Параметр 2:</strong> {{ product.parameter_2 }}</p>
-            <p><strong>Параметр 3:</strong> {{ product.parameter_3 }}</p>
-            <p><strong>Параметр 4:</strong> {{ product.parameter_4 }}</p>
-            <p><strong>Параметр 5:</strong> {{ product.parameter_5 }}</p>
-            <p><strong></strong> {{ product.stock_quantity }} шт.</p>
 
-            <div class="mt-4 d-flex gap-2">
-                {% if user.is_authenticated %}
-                    {% if user.is_superuser %}
-                        <a href="{% url 'edit_product' product.id %}" class="btn btn-warning">Редактировать</a>
-                        <a href="{% url 'delete_product' product.id %}" class="btn btn-danger">Удалить</a>
-                    {% else %}
-                        <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success">Добавить в корзину</a>
-                        <a href="{% url 'checkout' %}?product_id={{ product.id }}" class="btn btn-primary">Купить</a>
-                    {% endif %}
+            <div class="mt-4">
+                <h4>Характеристики</h4>
+                {% if product.get_parameters_display %}
+                <table class="table table-striped">
+                    <tbody>
+                        {% for name, value in product.get_parameters_display %}
+                        <tr>
+                            <td><strong>{{ name }}</strong></td>
+                            <td>{{ value }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
                 {% else %}
-                    <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-success">Добавить в корзину</a>
-                    <a href="{% url 'login' %}?next={% url 'checkout' %}?product_id={{ product.id }}" class="btn btn-primary">Купить</a>
+                <p>Характеристики не указаны</p>
                 {% endif %}
             </div>
 
-            <!-- Рейтинг товара -->
+            <div class="mt-3">
+                <p><strong>Описание:</strong></p>
+                <p>{{ product.description|linebreaks }}</p>
+            </div>
+
+            <p><strong>Количество в наличии:</strong> {{ product.stock_quantity }} шт.</p>
+
+            <!-- Кнопки действий -->
+            <div class="mt-4 d-flex gap-2">
+                {% if user.is_authenticated %}
+                {% if user.is_superuser %}
+                <a href="{% url 'edit_product' product.id %}" class="btn btn-warning">Редактировать</a>
+                <a href="{% url 'delete_product' product.id %}" class="btn btn-danger">Удалить</a>
+                {% else %}
+                <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success">Добавить в корзину</a>
+                <a href="{% url 'checkout' %}?product_id={{ product.id }}" class="btn btn-primary">Купить</a>
+                {% endif %}
+                {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-success">Добавить в корзину</a>
+                <a href="{% url 'login' %}?next={% url 'checkout' %}?product_id={{ product.id }}"
+                    class="btn btn-primary">Купить</a>
+                {% endif %}
+            </div>
+
+            <!-- Рейтинг и отзывы -->
             <div class="mt-4">
-                <h5>Рейтинг: {{ product.average_rating|floatformat:2 }}</h5> <!-- Выводим рейтинг с 2 знаками после запятой -->
+                <h5>Рейтинг: {{ product.average_rating|floatformat:2 }}</h5>
                 <div>
                     {% for i in rating_range %}
-                        {% if i <= product.average_rating %}
-                            &#9733; <!-- Звезда заполнена -->
+                    {% if i <= product.average_rating %} <span class="text-warning">★</span>
                         {% else %}
-                            &#9734; <!-- Пустая звезда -->
+                        <span class="text-secondary">☆</span>
                         {% endif %}
-                    {% endfor %}
-                    <span>({{ product.reviews.count }} отзыва)</span>
+                        {% endfor %}
+                        <span>({{ product.reviews.count }} отзыва)</span>
                 </div>
             </div>
 
-            <!-- Форма для оставления отзыва -->
-            {% if user.is_authenticated %}
-                {% if can_leave_review %}
-                    <h5 class="mt-4">Оставьте свой отзыв</h5>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label for="rating">Рейтинг:</label>
-                            <select name="rating" id="rating" class="form-control" required>
-                                <option value="1">1 - Очень плохо</option>
-                                <option value="2">2 - Плохо</option>
-                                <option value="3">3 - Нормально</option>
-                                <option value="4">4 - Хорошо</option>
-                                <option value="5">5 - Отлично</option>
-                            </select>
-                        </div>
-                        <div class="form-group mt-3">
-                            <label for="comment">Комментарий:</label>
-                            <textarea name="comment" id="comment" class="form-control" rows="4"></textarea> <!-- Убираем "required" -->
-                        </div>
-                        <button type="submit" class="btn btn-primary mt-3">Отправить отзыв</button>
-                    </form>
-                {% else %}
-                    <p class="mt-4">Вы не можете оставить отзыв для этого товара.</p>
-                {% endif %}
-            {% else %}
-                <p class="mt-4">Чтобы оставить отзыв, необходимо <a href="{% url 'login' %}">войти</a>.</p>
+            <!-- Форма отзыва -->
+            {% if user.is_authenticated and can_leave_review %}
+            <div class="mt-4 border-top pt-3">
+                <h5>Оставьте отзыв</h5>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="rating">Оценка:</label>
+                        <select name="rating" id="rating" class="form-control" required>
+                            <option value="" selected disabled>Выберите оценку</option>
+                            <option value="1">1 ★</option>
+                            <option value="2">2 ★★</option>
+                            <option value="3">3 ★★★</option>
+                            <option value="4">4 ★★★★</option>
+                            <option value="5">5 ★★★★★</option>
+                        </select>
+                    </div>
+                    <div class="form-group mt-3">
+                        <label for="comment">Комментарий:</label>
+                        <textarea name="comment" id="comment" class="form-control" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">Отправить отзыв</button>
+                </form>
+            </div>
             {% endif %}
 
-            <!-- Отзывы -->
-            <div class="mt-4">
-                <h5>Отзывы:</h5>
-                {% if product.reviews.count > 0 %}
-                    <ul class="list-unstyled">
-                        {% for review in product.reviews.all %}
-                        <li class="border-bottom mb-3 pb-2">
-                            <div>
-                                <strong>{{ review.user.username }}</strong>
-                                <div>
-                                    {% for i in rating_range %}
-                                        {% if i <= review.rating %}
-                                            &#9733; <!-- Звезда заполнена -->
-                                        {% else %}
-                                            &#9734; <!-- Пустая звезда -->
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <p>{{ review.comment }}</p>
-                            <small>Отзыв оставлен {{ review.created_at }}</small>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>Отзывов пока нет.</p>
-                {% endif %}
+            <!-- Список отзывов -->
+            {% if product.reviews.count > 0 %}
+            <div class="mt-4 border-top pt-3">
+                <h5>Отзывы покупателей</h5>
+                {% for review in product.reviews.all %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="card-title">{{ review.user.username }}</h6>
+                            <small class="text-muted">{{ review.created_at|date:"d.m.Y H:i" }}</small>
+                        </div>
+                        <div class="mb-2">
+                            {% for i in rating_range %}
+                            <span
+                                class="{% if i <= review.rating %}text-warning{% else %}text-secondary{% endif %}">★</span>
+                            {% endfor %}
+                        </div>
+                        <p class="card-text">{{ review.comment|linebreaks }}</p>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
+            {% endif %}
         </div>
     </div>
 </div>

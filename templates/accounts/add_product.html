@@ -3,31 +3,61 @@
 {% block content %}
 <div class="container mt-5">
     <h2>Добавить товар</h2>
-    
-    <form method="POST" enctype="multipart/form-data">
+
+    <form method="POST" enctype="multipart/form-data" id="product-form">
         {% csrf_token %}
-        {{ product_form.as_p }}
+
+        {% for field in product_form %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+
+            {% if field.field.widget.input_type == 'select' %}
+            {% if field.name == 'category' or field.name == 'subcategory' %}
+            {{ field }}
+            {% else %}
+            <div class="input-group mb-3">
+                {{ field }}
+                <div class="input-group-append">
+                    <input type="text" class="form-control param-input" placeholder="Новое значение"
+                        data-model="{{ field.name }}" data-target="#{{ field.id_for_label }}">
+                    <button type="button" class="btn btn-outline-secondary add-param-btn" data-model="{{ field.name }}"
+                        data-target="#{{ field.id_for_label }}">
+                        Добавить
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            {{ field }}
+            {% endif %}
+        </div>
+        {% endfor %}
+
         <button type="submit" class="btn btn-primary">Добавить товар</button>
     </form>
 
     <hr>
-
     <h4>Не нашли нужную категорию?</h4>
-    <a href="{% url 'add_category' %}" class="btn btn-secondary">Добавить категорию</a>
+    <div class="mb-3">
+        <a href="{% url 'add_category' %}" class="btn btn-secondary mr-2">Добавить категорию</a>
+        <a href="{% url 'add_subcategory' %}" class="btn btn-secondary">Добавить подкатегорию</a>
+    </div>
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
+        // Обработчик для категорий и подкатегорий
         const categorySelect = document.querySelector('[name="category"]');
         const subcategorySelect = document.querySelector('[name="subcategory"]');
-        
+
         if (categorySelect && subcategorySelect) {
-            categorySelect.addEventListener('change', function() {
+            categorySelect.addEventListener('change', function () {
                 const categoryId = this.value;
-                
+
                 subcategorySelect.innerHTML = '<option value="">Загрузка...</option>';
-                
+
                 if (categoryId) {
                     fetch(`/accounts/get_subcategories/${categoryId}/`)
                         .then(response => response.json())
@@ -48,7 +78,70 @@
                     subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
                 }
             });
+
+            // Инициализация подкатегорий при загрузке, если категория уже выбрана
+            if (categorySelect.value) {
+                categorySelect.dispatchEvent(new Event('change'));
+            }
         }
+
+        // Обработчики для добавления параметров
+        document.querySelectorAll('.add-param-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const model = this.dataset.model;
+                const target = this.dataset.target;
+                const input = this.previousElementSibling;
+                const value = input.value.trim();
+
+                if (!value) {
+                    alert('Пожалуйста, введите значение');
+                    return;
+                }
+
+                // Показать индикатор загрузки
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+
+                fetch('/accounts/add_parameter_value/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ model: model, value: value })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const select = document.querySelector(target);
+                            const option = new Option(data.value, data.id);
+                            select.add(option);
+                            select.value = data.id;
+                            input.value = '';
+                        } else {
+                            alert('Ошибка: ' + (data.error || 'Не удалось добавить значение'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Произошла ошибка при сохранении');
+                    })
+                    .finally(() => {
+                        this.disabled = false;
+                        this.textContent = 'Добавить';
+                    });
+            });
+        });
+
+        // Обработчик Enter в полях ввода
+        document.querySelectorAll('.param-input').forEach(input => {
+            input.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.nextElementSibling.click();
+                }
+            });
+        });
     });
 </script>
 {% endblock %}

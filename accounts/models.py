@@ -30,78 +30,86 @@ class Subcategory(models.Model):
     def __str__(self):
         return self.name
     
+class ParameterModel(models.Model):
+    """Абстрактная модель для параметров"""
+    class Meta:
+        abstract = True
+    
+    def display_value(self):
+        return str(self)
+    
 
-class Memory(models.Model):
-    value = models.CharField(max_length=50, verbose_name="Память (GB)",unique=True, default='128')
+class Memory(ParameterModel):
+    value = models.CharField(max_length=50, verbose_name="Память (GB)", unique=True, default='128')
+
+    def __str__(self):
+        return f"{self.value} GB"
+
+class RAM(ParameterModel):
+    value = models.CharField(max_length=50, verbose_name="ОЗУ (GB)", unique=True, default='8')
+
+    def __str__(self):
+        return f"{self.value} GB"
+
+class CoreCount(ParameterModel):
+    value = models.CharField(max_length=20, verbose_name="Количество ядер", unique=True, default='4')
 
     def __str__(self):
         return self.value
 
-class RAM(models.Model):
-    value = models.CharField(max_length=50, verbose_name="ОЗУ (GB)",unique=True, default='8')
-
-    def __str__(self):
-        return self.value
-
-class CoreCount(models.Model):
-    value = models.CharField(max_length=20, verbose_name="Количество ядер",unique=True, default='4')
-
-    def __str__(self):
-        return self.value
-
-class Color(models.Model):
-    name = models.CharField(max_length=50, verbose_name="Цвет",unique=True, default='Черный')
+class Color(ParameterModel):
+    name = models.CharField(max_length=50, verbose_name="Цвет", unique=True, default='Черный')
 
     def __str__(self):
         return self.name
 
-class ScreenDiagonal(models.Model):
-    value = models.CharField(max_length=50, verbose_name="Диагональ экрана (дюймы)",unique=True, default='6.7')
+class ScreenDiagonal(ParameterModel):
+    value = models.CharField(max_length=50, verbose_name="Диагональ экрана (дюймы)", unique=True, default='6.7')
 
     def __str__(self):
-        return self.value
+        return f"{self.value} дюймов"
 
-class BatteryCapacity(models.Model):
-    value = models.CharField(max_length=50, verbose_name="Емкость аккумулятора (мАч)",unique=True, default='5000')
-
-    def __str__(self):
-        return self.value
-
-class OperatingSystem(models.Model):
-    name = models.CharField(max_length=50, verbose_name="Операционная система",unique=True, default='Не установлена')
+class BatteryCapacity(ParameterModel):
+    value = models.CharField(max_length=50, verbose_name="Емкость аккумулятора (мАч)", unique=True, default='5000')
 
     def __str__(self):
-        return self.name
+        return f"{self.value} мАч"
 
-class Camera(models.Model):
-    value = models.CharField(max_length=50, verbose_name="Камера (Мп)",unique=True, default='12')
-
-    def __str__(self):
-        return self.value
-
-class Processor(models.Model):
-    name = models.CharField(max_length=100, verbose_name="Процессор",unique=True, default='Intel core i5')
+class OperatingSystem(ParameterModel):
+    name = models.CharField(max_length=50, verbose_name="Операционная система", unique=True, default='Не установлена')
 
     def __str__(self):
         return self.name
 
-class ConnectorType(models.Model):
-    name = models.CharField(max_length=100, verbose_name="Разъем",unique=True, default='Type-C')
+class Camera(ParameterModel):
+    value = models.CharField(max_length=50, verbose_name="Камера (Мп)", unique=True, default='12')
+
+    def __str__(self):
+        return f"{self.value} Мп"
+
+class Processor(ParameterModel):
+    name = models.CharField(max_length=100, verbose_name="Процессор", unique=True, default='Intel core i5')
 
     def __str__(self):
         return self.name
 
-class ConnectionType(models.Model):
-    type = models.CharField(max_length=50, verbose_name="Тип подключения",unique=True, default='Беспроводные')
+class ConnectorType(ParameterModel):
+    name = models.CharField(max_length=100, verbose_name="Разъем", unique=True, default='Type-C')
+
+    def __str__(self):
+        return self.name
+
+class ConnectionType(ParameterModel):
+    type = models.CharField(max_length=50, verbose_name="Тип подключения", unique=True, default='Беспроводные')
 
     def __str__(self):
         return self.type
 
-class CpuFrequency(models.Model):
+class CpuFrequency(ParameterModel):
     name = models.CharField(max_length=100, verbose_name="Частота процессора (Гц)", unique=True, default='2400')
 
     def __str__(self):
-        return self.name
+        return f"{self.name} Гц"
 
 class Product(models.Model):
     name = models.CharField(max_length=255, verbose_name="Название")
@@ -109,6 +117,7 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Категория")
     subcategory = models.ForeignKey(Subcategory, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="Подкатегория")
 
+    # Параметры товара
     memory = models.ForeignKey(Memory, on_delete=models.SET_NULL, null=True, blank=True)
     ram = models.ForeignKey(RAM, on_delete=models.SET_NULL, null=True, blank=True)
     core_count = models.ForeignKey(CoreCount, on_delete=models.SET_NULL, null=True, blank=True)
@@ -140,7 +149,33 @@ class Product(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.name    
+        return self.name
+
+    def get_parameters_display(self):
+        """Возвращает только заполненные параметры для отображения"""
+        params = []
+        fields = [
+            ('memory', 'Память'),
+            ('ram', 'ОЗУ'),
+            ('core_count', 'Количество ядер'),
+            ('color', 'Цвет'),
+            ('screen_diagonal', 'Диагональ экрана'),
+            ('battery_capacity', 'Емкость аккумулятора'),
+            ('operating_system', 'Операционная система'),
+            ('main_camera', 'Основная камера'),
+            ('front_camera', 'Фронтальная камера'),
+            ('processor', 'Процессор'),
+            ('connector_type', 'Разъем'),
+            ('connection_type', 'Тип подключения'),
+            ('cpu_frequency', 'Частота процессора')
+        ]
+    
+        for field, name in fields:
+            obj = getattr(self, field)
+            if obj:  # Проверяем, что параметр задан
+                params.append((name, obj.display_value()))
+    
+        return params
 
 class Review(models.Model):
     product = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)
