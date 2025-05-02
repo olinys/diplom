@@ -1,46 +1,60 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 
 {% block content %}
 <div class="container mt-5">
-    <h2>Добавить товар</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Добавить товар</h2>
+        <a href="{% url 'home' %}" class="btn btn-outline-primary">Вернуться на главную</a>
+    </div>
 
-    <form method="POST" enctype="multipart/form-data" id="product-form">
-        {% csrf_token %}
+    <div class="card shadow rounded p-4">
+        <form method="POST" enctype="multipart/form-data" id="product-form">
+            {% csrf_token %}
 
-        {% for field in product_form %}
-        <div class="form-group">
-            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {% for field in product_form %}
+            <div class="form-group mb-3">
+                <label for="{{ field.id_for_label }}" class="font-weight-bold">{{ field.label }}</label>
 
-            {% if field.field.widget.input_type == 'select' %}
-            {% if field.name == 'category' or field.name == 'subcategory' %}
-            {{ field }}
-            {% else %}
-            <div class="input-group mb-3">
-                {{ field }}
-                <div class="input-group-append">
-                    <input type="text" class="form-control param-input" placeholder="Новое значение"
-                        data-model="{{ field.name }}" data-target="#{{ field.id_for_label }}">
-                    <button type="button" class="btn btn-outline-secondary add-param-btn" data-model="{{ field.name }}"
-                        data-target="#{{ field.id_for_label }}">
-                        Добавить
-                    </button>
-                </div>
+                {% if field.field.widget.input_type == 'select' %}
+                    {% if field.name == 'category' or field.name == 'subcategory' %}
+                        {{ field|add_class:"form-control" }}
+                    {% else %}
+                    <div class="input-group">
+                        {{ field|add_class:"form-control" }}
+                        <input type="text" class="form-control param-input" placeholder="Новое значение"
+                            data-model="{{ field.name }}" data-target="#{{ field.id_for_label }}">
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-outline-secondary add-param-btn"
+                                data-model="{{ field.name }}" data-target="#{{ field.id_for_label }}">
+                                Добавить
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    {{ field|add_class:"form-control" }}
+                {% endif %}
+                {% if field.errors %}
+                <div class="text-danger mt-1">{{ field.errors }}</div>
+                {% endif %}
             </div>
-            {% endif %}
-            {% else %}
-            {{ field }}
-            {% endif %}
+            {% endfor %}
+
+            <div class="text-right">
+                <button type="submit" class="btn btn-success">Добавить товар</button>
+            </div>
+        </form>
+    </div>
+
+    <hr class="my-5">
+
+    <div class="card p-4">
+        <h4>Не нашли нужную категорию?</h4>
+        <div class="mt-3">
+            <a href="{% url 'add_category' %}" class="btn btn-secondary mr-2">Добавить категорию</a>
+            <a href="{% url 'add_subcategory' %}" class="btn btn-secondary">Добавить подкатегорию</a>
         </div>
-        {% endfor %}
-
-        <button type="submit" class="btn btn-primary">Добавить товар</button>
-    </form>
-
-    <hr>
-    <h4>Не нашли нужную категорию?</h4>
-    <div class="mb-3">
-        <a href="{% url 'add_category' %}" class="btn btn-secondary mr-2">Добавить категорию</a>
-        <a href="{% url 'add_subcategory' %}" class="btn btn-secondary">Добавить подкатегорию</a>
     </div>
 </div>
 {% endblock %}
@@ -48,14 +62,12 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Обработчик для категорий и подкатегорий
         const categorySelect = document.querySelector('[name="category"]');
         const subcategorySelect = document.querySelector('[name="subcategory"]');
 
         if (categorySelect && subcategorySelect) {
             categorySelect.addEventListener('change', function () {
                 const categoryId = this.value;
-
                 subcategorySelect.innerHTML = '<option value="">Загрузка...</option>';
 
                 if (categoryId) {
@@ -79,18 +91,16 @@
                 }
             });
 
-            // Инициализация подкатегорий при загрузке, если категория уже выбрана
             if (categorySelect.value) {
                 categorySelect.dispatchEvent(new Event('change'));
             }
         }
 
-        // Обработчики для добавления параметров
         document.querySelectorAll('.add-param-btn').forEach(btn => {
             btn.addEventListener('click', function () {
                 const model = this.dataset.model;
                 const target = this.dataset.target;
-                const input = this.previousElementSibling;
+                const input = this.closest('.input-group').querySelector('.param-input');
                 const value = input.value.trim();
 
                 if (!value) {
@@ -98,7 +108,6 @@
                     return;
                 }
 
-                // Показать индикатор загрузки
                 this.disabled = true;
                 this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
@@ -133,12 +142,11 @@
             });
         });
 
-        // Обработчик Enter в полях ввода
         document.querySelectorAll('.param-input').forEach(input => {
             input.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    this.nextElementSibling.click();
+                    this.closest('.input-group').querySelector('.add-param-btn').click();
                 }
             });
         });

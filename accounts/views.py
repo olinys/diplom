@@ -6,7 +6,7 @@ from .forms import UserRegisterForm, UserProfileForm, ProductForm, CategoryForm,
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Cart, UserProfile, Product, Category, User, PickupPoint, Order, OrderProduct, Notification, Review, Subcategory, Processor, OperatingSystem, ConnectionType, Color, ConnectorType, Memory, RAM, CoreCount, ScreenDiagonal, BatteryCapacity, Camera, CpuFrequency
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Avg
 from django.contrib.auth.models import User
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator
@@ -38,10 +38,8 @@ def login_view(request):
                 if user.is_active:
                     login(request, user)
 
-                    # Быстрый переход в админку для суперпользователей
-                    if user.is_superuser:
-                        return redirect('/admin/')
-                    return redirect('home')
+                    # Перенаправление после входа
+                    return redirect('home')  # Работает для всех, не только для суперпользователя
                 else:
                     messages.error(request, "Ваша учетная запись отключена.")
             else:
@@ -51,6 +49,7 @@ def login_view(request):
 
     form = AuthenticationForm()
     return render(request, 'accounts/login.html', {'form': form})
+
 
 # ПОСЛЕ ВХОДА НАПРАВЛЯЕТ НА ГЛАВНУЮ
 def logout_view(request):
@@ -200,8 +199,9 @@ def add_parameter_value(request):
         
 # ОТОБРАЖЕНИЕ ТОВАРОВ НА ГЛАВНОЙ СТРАНИЦК
 def home(request):
-    products = Product.objects.all()
-    return render(request, 'home.html', {'products': products})
+    new_products = Product.objects.order_by('-id')[:10]  # Сначала используем сортировку по id
+    
+    return render(request, 'home.html', {'new_products': new_products})
 
 # ДОБАВЛЕНИЕ ТОВАРОВ В КОРЗИНУ
 def add_to_cart(request, product_id):
@@ -455,46 +455,45 @@ def product_search(request):
         'connection_type': request.GET.get('connection_type'),
     }
 
-    if filters['memory']:
-        products = products.filter(memory_id=filters['memory'])
-    if filters['ram']:
-        products = products.filter(ram_id=filters['ram'])
-    if filters['color']:
-        products = products.filter(color_id=filters['color'])
-    if filters['price_min']:
-        products = products.filter(price__gte=filters['price_min'])
-    if filters['price_max']:
-        products = products.filter(price__lte=filters['price_max'])
-    if filters['front_camera']:
-        products = products.filter(front_camera_id=filters['front_camera'])
-    if filters['main_camera']:
-        products = products.filter(main_camera_id=filters['main_camera'])
-    if filters['core_count']:
-        products = products.filter(core_count_id=filters['core_count'])
-    if filters['screen_diagonal']:
-        products = products.filter(screen_diagonal_id=filters['screen_diagonal'])
-    if filters['battery_capacity']:
-        products = products.filter(battery_capacity_id=filters['battery_capacity'])
-    if filters['operating_system']:
-        products = products.filter(operating_system_id=filters['operating_system'])
-    if filters['cpu_frequency']:
-        products = products.filter(cpu_frequency_id=filters['cpu_frequency'])
-    if filters['processor']:
-        products = products.filter(processor_id=filters['processor'])
-    if filters['connector_type']:
-        products = products.filter(connector_type_id=filters['connector_type'])
-    if filters['connection_type']:
-        products = products.filter(connection_type_id=filters['connection_type'])
-
-
-    results = []
-    categories = Category.objects.all()
-    subcategories = Subcategory.objects.filter(category_id=category_id) if category_id else Subcategory.objects.none()
-
+    # Инициализируем results пустым queryset
+    results = Product.objects.none()
+    
     if query:
         results = Product.objects.filter(
             Q(name__icontains=query) | Q(sku__icontains=query)
         )
+
+        # Применяем фильтры к results
+        if filters['memory']:
+            results = results.filter(memory_id=filters['memory'])
+        if filters['ram']:
+            results = results.filter(ram_id=filters['ram'])
+        if filters['color']:
+            results = results.filter(color_id=filters['color'])
+        if filters['price_min']:
+            results = results.filter(price__gte=filters['price_min'])
+        if filters['price_max']:
+            results = results.filter(price__lte=filters['price_max'])
+        if filters['front_camera']:
+            results = results.filter(front_camera_id=filters['front_camera'])
+        if filters['main_camera']:
+            results = results.filter(main_camera_id=filters['main_camera'])
+        if filters['core_count']:
+            results = results.filter(core_count_id=filters['core_count'])
+        if filters['screen_diagonal']:
+            results = results.filter(screen_diagonal_id=filters['screen_diagonal'])
+        if filters['battery_capacity']:
+            results = results.filter(battery_capacity_id=filters['battery_capacity'])
+        if filters['operating_system']:
+            results = results.filter(operating_system_id=filters['operating_system'])
+        if filters['cpu_frequency']:
+            results = results.filter(cpu_frequency_id=filters['cpu_frequency'])
+        if filters['processor']:
+            results = results.filter(processor_id=filters['processor'])
+        if filters['connector_type']:
+            results = results.filter(connector_type_id=filters['connector_type'])
+        if filters['connection_type']:
+            results = results.filter(connection_type_id=filters['connection_type'])
 
         if category_id:
             results = results.filter(category_id=category_id)
@@ -511,21 +510,23 @@ def product_search(request):
         elif sort == 'rating_desc':
             results = results.order_by('-average_rating')
 
+    categories = Category.objects.all()
+    subcategories = Subcategory.objects.filter(category_id=category_id) if category_id else Subcategory.objects.none()
 
     filter_options = {
         'memory': Memory.objects.all(),
         'ram': RAM.objects.all(),
         'color': Color.objects.all(),
-        'front_camera':Camera.objects.all(),
-        'main_camera':Camera.objects.all(),
-        'core_count':CoreCount.objects.all(),
-        'screen_diagonal':ScreenDiagonal.objects.all(),
-        'battery_capacity':BatteryCapacity.objects.all(),
-        'operating_system':OperatingSystem.objects.all(),
+        'front_camera': Camera.objects.all(),
+        'main_camera': Camera.objects.all(),
+        'core_count': CoreCount.objects.all(),
+        'screen_diagonal': ScreenDiagonal.objects.all(),
+        'battery_capacity': BatteryCapacity.objects.all(),
+        'operating_system': OperatingSystem.objects.all(),
         'cpu_frequency': CpuFrequency.objects.all(),
-        'processor':Processor.objects.all(),
-        'connector_type':ConnectorType.objects.all(),
-        'connection_type':ConnectionType.objects.all(),
+        'processor': Processor.objects.all(),
+        'connector_type': ConnectorType.objects.all(),
+        'connection_type': ConnectionType.objects.all(),
     }
 
     return render(request, 'accounts/search_results.html', {
@@ -539,7 +540,6 @@ def product_search(request):
         'filters': filters,
         'filter_options': filter_options,
     })
-
 
 
 # ПРОСМОТР АКТИВНОСТЕЙ ПОЛЬЗОВАТЕЛЕЙ
@@ -611,22 +611,45 @@ def product_detail(request, product_id):
         ).prefetch_related('reviews'),
         pk=product_id
     )
-    
+
+    # Пересчитываем средний рейтинг
+    reviews = product.reviews.all()
+    if reviews.exists():
+        average_rating = reviews.aggregate(Avg('rating'))['rating__avg']
+        product.average_rating = round(average_rating, 2) if average_rating else 0.00
+        product.save(update_fields=['average_rating'])
+
     can_leave_review = False
     if request.user.is_authenticated:
-        # Логика проверки возможности оставить отзыв
-        pass
-    
-    if request.method == 'POST' and can_leave_review:
+        # Проверка, покупал ли пользователь товар
+        has_order = Order.objects.filter(
+            user=request.user,
+            status='ready for pickup',
+            orderproduct__product=product
+        ).exists()
+
+        # Проверка, оставлял ли уже отзыв
+        has_reviewed = product.reviews.filter(user=request.user).exists()
+
+        can_leave_review = has_order and not has_reviewed
+
         # Обработка отзыва
-        pass
-    
+        if request.method == 'POST' and can_leave_review:
+            rating = int(request.POST.get('rating'))
+            comment = request.POST.get('comment', '')
+            Review.objects.create(
+                product=product,
+                user=request.user,
+                rating=rating,
+                comment=comment
+            )
+            return redirect('product_detail', product_id=product.id)
+
     return render(request, 'product_detail.html', {
         'product': product,
         'can_leave_review': can_leave_review,
         'rating_range': range(1, 6)
     })
-
 
 # ОФОРМЛЕНИЕ ЗАКАЗА
 @login_required

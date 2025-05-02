@@ -67,6 +67,87 @@
         .card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+
+        /* Стили для блока новинок */
+        .new-products-section {
+            margin: 40px 0;
+            padding: 20px 0;
+        }
+
+        .new-products-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .new-products-container {
+            position: relative;
+        }
+
+        .new-products-scroller {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scrollbar-width: none; /* Для Firefox */
+            -ms-overflow-style: none; /* Для IE и Edge */
+            padding: 10px 0;
+            gap: 20px;
+        }
+
+        .new-products-scroller::-webkit-scrollbar {
+            display: none; /* Для Chrome, Safari и Opera */
+        }
+
+        .new-product-card {
+            flex: 0 0 calc(33.333% - 20px);
+            min-width: 300px;
+            scroll-snap-align: start;
+        }
+
+        .scroll-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .scroll-btn:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .scroll-btn-left {
+            left: -20px;
+        }
+
+        .scroll-btn-right {
+            right: -20px;
+        }
+
+        @media (max-width: 768px) {
+            .new-product-card {
+                flex: 0 0 calc(50% - 15px);
+                min-width: 250px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .new-product-card {
+                flex: 0 0 100%;
+                min-width: 100%;
+            }
+        }
     </style>
 </head>
 
@@ -115,8 +196,6 @@
                         <span class="username-text">{{ user.username|slice:":1" }}</span> <!-- Первое письмо имени -->
                     </a>
                     {% endif %}
-
-
 
                     <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Выйти</a>
                     {% else %}

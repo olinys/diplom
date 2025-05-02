@@ -1,60 +1,73 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 
 {% block content %}
 <div class="container mt-5">
-    <h2>Редактировать товар: {{ product.name }}</h2>
-    
-    <form method="POST" enctype="multipart/form-data" id="product-form">
+    <h2 class="mb-4">Редактировать товар: {{ product.name }}</h2>
+
+    <form method="POST" enctype="multipart/form-data" id="product-form" class="p-4 rounded shadow bg-white">
         {% csrf_token %}
-        
+
         {% for field in form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                
+            <div class="mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+
                 {% if field.field.widget.input_type == 'select' %}
                     {% if field.name == 'category' or field.name == 'subcategory' %}
-                        {{ field }}
+                        {{ field|add_class:"form-select" }}
                     {% else %}
-                        <div class="input-group mb-3">
-                            {{ field }}
-                            <div class="input-group-append">
-                                <input type="text" class="form-control param-input" 
-                                       placeholder="Новое значение" 
-                                       data-model="{{ field.name }}"
-                                       data-target="#{{ field.id_for_label }}">
-                                <button type="button" class="btn btn-outline-secondary add-param-btn" 
-                                        data-model="{{ field.name }}"
-                                        data-target="#{{ field.id_for_label }}">
-                                    Добавить
-                                </button>
-                            </div>
+                        <div class="input-group">
+                            {{ field|add_class:"form-select" }}
+                            <input type="text" class="form-control param-input" 
+                                   placeholder="Новое значение"
+                                   data-model="{{ field.name }}"
+                                   data-target="#{{ field.id_for_label }}">
+                            <button type="button" class="btn btn-outline-secondary add-param-btn" 
+                                    data-model="{{ field.name }}"
+                                    data-target="#{{ field.id_for_label }}">
+                                Добавить
+                            </button>
                         </div>
                     {% endif %}
+                {% elif field.field.widget.input_type == 'checkbox' %}
+                    <div class="form-check">
+                        {{ field|add_class:"form-check-input" }}
+                        <label class="form-check-label" for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
+                    </div>
                 {% else %}
-                    {{ field }}
+                    {{ field|add_class:"form-control" }}
+                {% endif %}
+
+                {% if field.errors %}
+                    <div class="text-danger small mt-1">
+                        {{ field.errors|striptags }}
+                    </div>
                 {% endif %}
             </div>
         {% endfor %}
-        
-        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
-        <a href="{% url 'home' %}" class="btn btn-secondary">Отмена</a>
+
+        <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            <a href="{% url 'home' %}" class="btn btn-secondary"> Отмена</a>
+        </div>
     </form>
 </div>
 {% endblock %}
 
 {% block scripts %}
+{{ block.super }}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Обработчик для категорий и подкатегорий
         const categorySelect = document.querySelector('[name="category"]');
         const subcategorySelect = document.querySelector('[name="subcategory"]');
         
         if (categorySelect && subcategorySelect) {
             categorySelect.addEventListener('change', function() {
                 const categoryId = this.value;
-                
                 subcategorySelect.innerHTML = '<option value="">Загрузка...</option>';
-                
+
                 if (categoryId) {
                     fetch(`/accounts/get_subcategories/${categoryId}/`)
                         .then(response => response.json())
@@ -66,8 +79,7 @@
                                 option.textContent = subcategory.name;
                                 subcategorySelect.appendChild(option);
                             });
-                            
-                            // Установка текущего значения подкатегории после загрузки
+
                             const currentSubcategoryId = '{{ form.instance.subcategory.id|default:"" }}';
                             if (currentSubcategoryId) {
                                 subcategorySelect.value = currentSubcategoryId;
@@ -81,30 +93,27 @@
                     subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
                 }
             });
-            
-            // Инициализация подкатегорий при загрузке
+
             if (categorySelect.value) {
                 categorySelect.dispatchEvent(new Event('change'));
             }
         }
-        
-        // Обработчики для добавления параметров
+
         document.querySelectorAll('.add-param-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const model = this.dataset.model;
                 const target = this.dataset.target;
                 const input = this.previousElementSibling;
                 const value = input.value.trim();
-                
+
                 if (!value) {
                     alert('Пожалуйста, введите значение');
                     return;
                 }
-                
-                // Показать индикатор загрузки
+
                 this.disabled = true;
                 this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
-                
+
                 fetch('/accounts/add_parameter_value/', {
                     method: 'POST',
                     headers: {
@@ -119,13 +128,10 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Добавляем новую опцию в select
                         const select = document.querySelector(target);
                         const option = new Option(data.value, data.id);
                         select.add(option);
                         select.value = data.id;
-                        
-                        // Очищаем поле ввода
                         input.value = '';
                     } else {
                         alert('Ошибка: ' + (data.error || 'Не удалось добавить значение'));
@@ -141,8 +147,7 @@
                 });
             });
         });
-        
-        // Обработчик Enter в полях ввода
+
         document.querySelectorAll('.param-input').forEach(input => {
             input.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {

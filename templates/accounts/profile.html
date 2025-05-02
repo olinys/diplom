@@ -1,11 +1,31 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
 
 {% block content %}
-    <h2>Личный кабинет</h2>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Сохранить</button>
-    </form>
-    <p><a href="{% url 'home' %}">Вернуться на главную</a></p>
+<div class="container mt-5">
+    <div class="card shadow-lg rounded-4 p-4">
+        <h2 class="mb-4 text-center">Личный кабинет</h2>
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <div class="form-floating mb-3">
+                    {{ field|add_class:"form-control" }}
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {% if field.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ field.errors.as_text|striptags }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary">На главную</a>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

@@ -283,9 +283,44 @@
             </div>
 
             {% if results %}
-            <div class="row">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 {% for product in results %}
-                    {% include 'includes/product_card.html' %}
+                <div class="col">
+                    <div class="card h-100">
+                        <a href="{% url 'product_detail' product.id %}" class="text-decoration-none text-dark">
+                            {% if product.image %}
+                            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}"
+                                 style="object-fit: cover; height: 200px; width: 100%;">
+                            {% else %}
+                            <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="No Image Available"
+                                 style="object-fit: cover; height: 200px; width: 100%;">
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">{{ product.name }}</h5>
+                                <p class="card-text">Цена: {{ product.price }} BYN</p>
+                                <p class="card-text">Категория: {{ product.category.name }}</p>
+                                <p class="card-text">Артикул: {{ product.sku }}</p>
+                                <p class="card-text">В наличии: {{ product.stock_quantity }} шт.</p>
+
+                                <!-- Рейтинг товара -->
+                                <div class="mt-2">
+                                    <span>Рейтинг: {{ product.average_rating|floatformat:2 }}</span>
+                                    <div>
+                                        {% with ''|center:5 as range %}
+                                        {% for _ in range %}
+                                            {% if forloop.counter <= product.average_rating %}
+                                                &#9733; <!-- Звезда заполнена -->
+                                            {% else %}
+                                                &#9734; <!-- Пустая звезда -->
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
                 {% endfor %}
             </div>
             {% else %}
@@ -293,39 +328,40 @@
                 Ничего не найдено. Попробуйте изменить параметры поиска или фильтрации.
             </div>
             {% endif %}
+
+            <!-- Пагинация -->
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo; Первая</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Предыдущая</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Следующая</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Последняя &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
         </div>
     </div>
 </div>
-
-<script>
-    document.getElementById('search-input').addEventListener('input', function() {
-        let query = this.value;
-        let resultsContainer = document.getElementById('autocomplete-results');
-
-        if (query.length > 0) {
-            fetch(`/search/autocomplete/?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    resultsContainer.innerHTML = '';
-                    if (data.results.length > 0) {
-                        resultsContainer.style.display = 'block';
-                        data.results.forEach(function(product) {
-                            let listItem = document.createElement('li');
-                            listItem.classList.add('list-group-item');
-                            listItem.textContent = `${product.name} - ${product.price} руб.`;
-                            listItem.onclick = function() {
-                                document.getElementById('search-input').value = product.name;
-                                resultsContainer.style.display = 'none';
-                            };
-                            resultsContainer.appendChild(listItem);
-                        });
-                    } else {
-                        resultsContainer.style.display = 'none';
-                    }
-                });
-        } else {
-            resultsContainer.style.display = 'none';
-        }
-    });
-</script>
 {% endblock %}

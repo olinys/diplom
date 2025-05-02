@@ -1,32 +1,30 @@
-<div class="col-md-4 mb-4">
+<div class="card h-100">
     <a href="{% url 'product_detail' product.id %}" class="text-decoration-none text-dark">
-        <div class="card">
-            {% if product.image %}
-            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}"
-                 style="object-fit: cover; height: 200px;">
-            {% else %}
-            <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="No Image Available"
-                 style="object-fit: cover; height: 200px;">
-            {% endif %}
-            <div class="card-body">
-                <h5 class="card-title">{{ product.name }}</h5>
-                <p class="card-text">Цена: {{ product.price }} BYN</p>
-                <p class="card-text">Категория: {{ product.category.name }}</p>
-                <p class="card-text">Артикул: {{ product.sku }}</p>
-                <p class="card-text">В наличии: {{ product.stock_quantity }} шт.</p>
+        {% if product.image %}
+        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}"
+             style="object-fit: cover; height: 200px;">
+        {% else %}
+        <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="No Image Available"
+             style="object-fit: cover; height: 200px;">
+        {% endif %}
+        <div class="card-body">
+            <h5 class="card-title">{{ product.name }}</h5>
+            <p class="card-text">Цена: {{ product.price }} BYN</p>
+            <p class="card-text">Категория: {{ product.category.name }}</p>
+            <p class="card-text">Артикул: {{ product.sku }}</p>
+            <p class="card-text">В наличии: {{ product.stock_quantity }} шт.</p>
 
-                <!-- Рейтинг товара -->
-                <div class="mt-2">
-                    <span>Рейтинг: {{ product.average_rating|floatformat:2 }}</span>
-                    <div>
-                        {% for i in rating_range %}
-                            {% if i <= product.average_rating %}
-                                &#9733; <!-- Звезда заполнена -->
-                            {% else %}
-                                &#9734; <!-- Пустая звезда -->
-                            {% endif %}
-                        {% endfor %}
-                    </div>
+            <!-- Рейтинг товара -->
+            <div class="mt-2">
+                <span>Рейтинг: {{ product.average_rating|floatformat:2 }}</span>
+                <div>
+                    {% for i in rating_range %}
+                        {% if i <= product.average_rating %}
+                            &#9733; <!-- Звезда заполнена -->
+                        {% else %}
+                            &#9734; <!-- Пустая звезда -->
+                        {% endif %}
+                    {% endfor %}
                 </div>
             </div>
         </div>

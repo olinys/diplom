@@ -26,6 +26,7 @@
             {% endif %}
             <p><strong>Артикул:</strong> {{ product.sku }}</p>
 
+            <!-- Характеристики товара -->
             <div class="mt-4">
                 <h4>Характеристики</h4>
                 {% if product.get_parameters_display %}
@@ -44,11 +45,13 @@
                 {% endif %}
             </div>
 
+            <!-- Описание товара -->
             <div class="mt-3">
                 <p><strong>Описание:</strong></p>
                 <p>{{ product.description|linebreaks }}</p>
             </div>
 
+            <!-- Количество в наличии -->
             <p><strong>Количество в наличии:</strong> {{ product.stock_quantity }} шт.</p>
 
             <!-- Кнопки действий -->
@@ -70,15 +73,16 @@
 
             <!-- Рейтинг и отзывы -->
             <div class="mt-4">
-                <h5>Рейтинг: {{ product.average_rating|floatformat:2 }}</h5>
+                <h5>Рейтинг: {{ product.average_rating|floatformat:2 }} из 5</h5>
                 <div>
                     {% for i in rating_range %}
-                    {% if i <= product.average_rating %} <span class="text-warning">★</span>
+                        {% if i <= product.average_rating %}
+                            <span class="text-warning">★</span>
                         {% else %}
-                        <span class="text-secondary">☆</span>
+                            <span class="text-secondary">☆</span>
                         {% endif %}
-                        {% endfor %}
-                        <span>({{ product.reviews.count }} отзыва)</span>
+                    {% endfor %}
+                    <span>({{ product.reviews.count }} отзыва)</span>
                 </div>
             </div>
 
@@ -121,8 +125,7 @@
                         </div>
                         <div class="mb-2">
                             {% for i in rating_range %}
-                            <span
-                                class="{% if i <= review.rating %}text-warning{% else %}text-secondary{% endif %}">★</span>
+                                <span class="{% if i <= review.rating %}text-warning{% else %}text-secondary{% endif %}">★</span>
                             {% endfor %}
                         </div>
                         <p class="card-text">{{ review.comment|linebreaks }}</p>

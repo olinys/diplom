@@ -4,13 +4,13 @@ from django.utils import timezone
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)  # Связь с моделью User
-    first_name = models.CharField(max_length=100, blank=True)
-    last_name = models.CharField(max_length=100, blank=True)
-    phone_number = models.CharField(max_length=20, blank=True)
-    birth_date = models.DateField(null=True, blank=True)
-    gender = models.CharField(max_length=10, choices=[('M', 'Male'), ('F', 'Female')], blank=True)
-    delivery_address = models.TextField(blank=True)
-    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    first_name = models.CharField(max_length=100, blank=True, verbose_name="Имя")
+    last_name = models.CharField(max_length=100, blank=True, verbose_name="Фамилия")
+    phone_number = models.CharField(max_length=20, blank=True, verbose_name="Номер телефона")
+    birth_date = models.DateField(null=True, blank=True, verbose_name="Дата рождения")
+    gender = models.CharField(max_length=10, choices=[('М', 'Мужской'), ('Ж', 'Женский')], blank=True, verbose_name="Пол")
+    delivery_address = models.TextField(blank=True, verbose_name="Адрес доставки")
+    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True, verbose_name="Изображение профиля")
 
     def __str__(self):
         return f"{self.user.username}'s profile"
@@ -118,25 +118,26 @@ class Product(models.Model):
     subcategory = models.ForeignKey(Subcategory, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="Подкатегория")
 
     # Параметры товара
-    memory = models.ForeignKey(Memory, on_delete=models.SET_NULL, null=True, blank=True)
-    ram = models.ForeignKey(RAM, on_delete=models.SET_NULL, null=True, blank=True)
-    core_count = models.ForeignKey(CoreCount, on_delete=models.SET_NULL, null=True, blank=True)
-    color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True)
-    screen_diagonal = models.ForeignKey(ScreenDiagonal, on_delete=models.SET_NULL, null=True, blank=True)
-    battery_capacity = models.ForeignKey(BatteryCapacity, on_delete=models.SET_NULL, null=True, blank=True)
-    operating_system = models.ForeignKey(OperatingSystem, on_delete=models.SET_NULL, null=True, blank=True)
-    main_camera = models.ForeignKey(Camera, on_delete=models.SET_NULL, null=True, blank=True, related_name='main_camera')
-    front_camera = models.ForeignKey(Camera, on_delete=models.SET_NULL, null=True, blank=True, related_name='front_camera')
-    cpu_frequency = models.ForeignKey(CpuFrequency, on_delete=models.SET_NULL, null=True, blank=True)
-    processor = models.ForeignKey(Processor, on_delete=models.SET_NULL, null=True, blank=True)
-    connector_type = models.ForeignKey(ConnectorType, on_delete=models.SET_NULL, null=True, blank=True)
-    connection_type = models.ForeignKey(ConnectionType, on_delete=models.SET_NULL, null=True, blank=True)
+    memory = models.ForeignKey(Memory, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Память")
+    ram = models.ForeignKey(RAM, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="ОЗУ")
+    core_count = models.ForeignKey(CoreCount, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Количество ядер")
+    color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Цвет")
+    screen_diagonal = models.ForeignKey(ScreenDiagonal, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Диагональ экрана")
+    battery_capacity = models.ForeignKey(BatteryCapacity, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Емкость аккумулятора")
+    operating_system = models.ForeignKey(OperatingSystem, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Операционная система")
+    main_camera = models.ForeignKey(Camera, on_delete=models.SET_NULL, null=True, blank=True, related_name='main_camera', verbose_name="Основная камера")
+    front_camera = models.ForeignKey(Camera, on_delete=models.SET_NULL, null=True, blank=True, related_name='front_camera', verbose_name="Фронтальная камера")
+    cpu_frequency = models.ForeignKey(CpuFrequency, on_delete=models.SET_NULL, null=True, blank=True,verbose_name="Тактовая частота процессора")
+    processor = models.ForeignKey(Processor, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Процессор")
+    connector_type = models.ForeignKey(ConnectorType, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Разъем для подключения")
+    connection_type = models.ForeignKey(ConnectionType, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Тип устройства")
 
     sku = models.CharField(max_length=50, unique=True, verbose_name="Артикул", blank=True)
     image = models.ImageField(upload_to="product_images/", blank=True, null=True, verbose_name="Изображение")
     description = models.TextField(blank=True, null=True, verbose_name="Описание")
     stock_quantity = models.PositiveIntegerField(default=0, verbose_name="Количество в наличии")
     average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания",null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.sku:
@@ -198,30 +199,30 @@ class Cart(models.Model):
     
 
 class PickupPoint(models.Model):
-    name = models.CharField(max_length=255)
-    address = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, verbose_name="Название ПВЗ")
+    address = models.CharField(max_length=255, verbose_name="Адрес ПВЗ")
 
     # Время открытия и закрытия для каждого дня
-    monday_open = models.TimeField(default="09:00:00")
-    monday_close = models.TimeField(default="12:00:00")
+    monday_open = models.TimeField(default="09:00:00", verbose_name="Понедельник с")
+    monday_close = models.TimeField(default="12:00:00", verbose_name="Понедельник до")
 
-    tuesday_open = models.TimeField(default="09:00:00")
-    tuesday_close = models.TimeField(default="21:00:00")
+    tuesday_open = models.TimeField(default="09:00:00", verbose_name="Вторник с")
+    tuesday_close = models.TimeField(default="21:00:00", verbose_name="Вторник до")
 
-    wednesday_open = models.TimeField(default="09:00:00")
-    wednesday_close = models.TimeField(default="21:00:00")
+    wednesday_open = models.TimeField(default="09:00:00", verbose_name="Среда с")
+    wednesday_close = models.TimeField(default="21:00:00", verbose_name="Среда до")
 
-    thursday_open = models.TimeField(default="09:00:00")
-    thursday_close = models.TimeField(default="21:00:00")
+    thursday_open = models.TimeField(default="09:00:00", verbose_name="Четверг с")
+    thursday_close = models.TimeField(default="21:00:00", verbose_name="Четверг до")
 
-    friday_open = models.TimeField(default="09:00:00")
-    friday_close = models.TimeField(default="21:00:00")
+    friday_open = models.TimeField(default="09:00:00", verbose_name="Пятница с")
+    friday_close = models.TimeField(default="21:00:00", verbose_name="Пятница до")
 
-    saturday_open = models.TimeField(default="09:00:00")
-    saturday_close = models.TimeField(default="21:00:00")
+    saturday_open = models.TimeField(default="09:00:00", verbose_name="Суббота с")
+    saturday_close = models.TimeField(default="21:00:00", verbose_name="Суббота до")
 
-    sunday_open = models.TimeField(default="09:00:00")
-    sunday_close = models.TimeField(default="21:00:00")
+    sunday_open = models.TimeField(default="09:00:00", verbose_name="Воскресенье с")
+    sunday_close = models.TimeField(default="21:00:00", verbose_name="Воскресенье до")
 
     def __str__(self):
         return self.name
