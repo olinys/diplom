@@ -6,53 +6,288 @@
 <div class="container">
     <h2>Каталог товаров</h2>
 
-    <!-- Список категорий -->
-    <div class="list-group mb-4">
-        <a href="{% url 'catalog' %}" class="list-group-item list-group-item-action">Все категории</a>
-        {% for category in categories %}
-            <a href="{% url 'catalog_by_category' category.id %}" class="list-group-item list-group-item-action">{{ category.name }}</a>
-        {% endfor %}
-    </div>
+    <div class="row">
+        <!-- Блок фильтров -->
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Фильтры</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" id="filter-form">
+                        {% if current_category_id %}
+                            <input type="hidden" name="category_id" value="{{ current_category_id }}">
+                        {% endif %}
+                        {% if current_subcategory_id %}
+                            <input type="hidden" name="subcategory_id" value="{{ current_subcategory_id }}">
+                        {% endif %}
+                        {% if current_sort %}
+                            <input type="hidden" name="sort" value="{{ current_sort }}">
+                        {% endif %}
 
-    {% if subcategories %}
-    <!-- Список подкатегорий -->
-    <div class="list-group mb-4">
-        <h4>Подкатегории</h4>
-        {% for subcategory in subcategories %}
-            <a href="{% url 'catalog_by_subcategory' current_category_id subcategory.id %}" class="list-group-item list-group-item-action">{{ subcategory.name }}</a>
-        {% endfor %}
-    </div>
-    {% endif %}
+                        <div class="mb-3">
+                            <label class="form-label">Цена</label>
+                            <div class="row g-2">
+                                <div class="col">
+                                    <input type="number" class="form-control" name="price_min" 
+                                           placeholder="От" value="{{ filters.price_min }}">
+                                </div>
+                                <div class="col">
+                                    <input type="number" class="form-control" name="price_max" 
+                                           placeholder="До" value="{{ filters.price_max }}">
+                                </div>
+                            </div>
+                        </div>
 
-    <!-- Сортировка -->
-    <form method="get" class="mb-4">
-        <div class="row g-2 align-items-center">
-            <div class="col-auto">
-                <label for="sort" class="col-form-label">Сортировать:</label>
-            </div>
-            <div class="col-auto">
-                <select class="form-select" id="sort" name="sort" onchange="this.form.submit()">
-                    <option value="" {% if not current_sort %}selected{% endif %}>Без сортировки</option>
-                    <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Цена: по возрастанию</option>
-                    <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Цена: по убыванию</option>
-                    <option value="rating_asc" {% if current_sort == 'rating_asc' %}selected{% endif %}>Рейтинг: по возрастанию</option>
-                    <option value="rating_desc" {% if current_sort == 'rating_desc' %}selected{% endif %}>Рейтинг: по убыванию</option>
-                </select>
+                        <div class="mb-3">
+                            <label class="form-label">Память</label>
+                            <select class="form-select" name="memory">
+                                <option value="">Любая</option>
+                                {% for memory in filter_options.memory %}
+                                    <option value="{{ memory.id }}" 
+                                            {% if filters.memory == memory.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ memory.value }} GB
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">ОЗУ</label>
+                            <select class="form-select" name="ram">
+                                <option value="">Любая</option>
+                                {% for ram in filter_options.ram %}
+                                    <option value="{{ ram.id }}" 
+                                            {% if filters.ram == ram.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ ram.value }} GB
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Фронтальная камера</label>
+                            <select class="form-select" name="front_camera">
+                                <option value="">Любая</option>
+                                {% for front_camera in filter_options.front_camera %}
+                                    <option value="{{ front_camera.id }}"
+                                        {% if filters.front_camera == front_camera.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ front_camera.value }} Мп
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Основная камера</label>
+                            <select class="form-select" name="main_camera">
+                                <option value="">Любая</option>
+                                {% for main_camera in filter_options.main_camera %}
+                                    <option value="{{ main_camera.id }}"
+                                        {% if filters.main_camera == main_camera.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ main_camera.value }} Мп
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Количество ядер</label>
+                            <select class="form-select" name="core_count">
+                                <option value="">Любое</option>
+                                {% for core_count in filter_options.core_count %}
+                                    <option value="{{ core_count.id }}"  
+                                        {% if filters.core_count == core_count.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ core_count.value}} Ядра / Ядер
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Диагональ экрана</label>
+                            <select class="form-select" name="screen_diagonal">
+                                <option value="">Любая</option>
+                                {% for screen_diagonal in filter_options.screen_diagonal %}
+                                    <option value="{{ screen_diagonal.id }}"  
+                                        {% if filters.screen_diagonal == screen_diagonal.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ screen_diagonal.value}} "
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Емкость аккумулятора</label>
+                            <select class="form-select" name="battery_capacity">
+                                <option value="">Любая</option>
+                                {% for battery_capacity in filter_options.battery_capacity %}
+                                    <option value="{{ battery_capacity.id }}"  
+                                        {% if filters.battery_capacity == battery_capacity.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ battery_capacity.value}} мАч
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Операционная система</label>
+                            <select class="form-select" name="operating_system">
+                                <option value="">Любая</option>
+                                {% for operating_system in filter_options.operating_system %}
+                                    <option value="{{ operating_system.id }}"  
+                                        {% if filters.operating_system == operating_system.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ operating_system.name}}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Тактовая частота процессора</label>
+                            <select class="form-select" name="cpu_frequency">
+                                <option value="">Любая</option>
+                                {% for cpu_frequency in filter_options.cpu_frequency %}
+                                    <option value="{{ cpu_frequency.id }}"  
+                                        {% if filters.cpu_frequency == cpu_frequency.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ cpu_frequency.name}} Гц
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Процессор</label>
+                            <select class="form-select" name="processor">
+                                <option value="">Любой</option>
+                                {% for processor in filter_options.processor %}
+                                    <option value="{{ processor.id }}"  
+                                        {% if filters.processor == processor.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ processor.name}}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Разъем для подключения</label>
+                            <select class="form-select" name="connector_type">
+                                <option value="">Любой</option>
+                                {% for connector_type in filter_options.connector_type %}
+                                    <option value="{{ connector_type.id }}"  
+                                        {% if filters.connector_type == connector_type.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ connector_type.name}}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Тип устройства</label>
+                            <select class="form-select" name="connection_type">
+                                <option value="">Любой</option>
+                                {% for connection_type in filter_options.connection_type %}
+                                    <option value="{{ connection_type.id }}"  
+                                        {% if filters.connection_type == connection_type.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ connection_type.type}}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Цвет</label>
+                            <select class="form-select" name="color">
+                                <option value="">Любой</option>
+                                {% for color in filter_options.color %}
+                                    <option value="{{ color.id }}" 
+                                            {% if filters.color == color.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ color.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+
+                        <button type="submit" class="btn btn-primary w-100">Применить</button>
+                        <a href="{% if current_category_id %}
+                                    {% if current_subcategory_id %}
+                                        {% url 'catalog_by_subcategory' current_category_id current_subcategory_id %}
+                                    {% else %}
+                                        {% url 'catalog_by_category' current_category_id %}
+                                    {% endif %}
+                                 {% else %}
+                                    {% url 'catalog' %}
+                                 {% endif %}" 
+                           class="btn btn-outline-secondary w-100 mt-2">
+                            Сбросить
+                        </a>
+                    </form>
+                </div>
             </div>
         </div>
-    </form>
 
-    <div class="mt-4">
-        <h3>Товары</h3>
-        {% if products %}
-        <div class="row">
-            {% for product in products %}
-                {% include 'includes/product_card.html' %}
-            {% endfor %}
+        <!-- Блок товаров -->
+        <div class="col-md-9">
+            <!-- Список категорий -->
+            <div class="list-group mb-4">
+                <a href="{% url 'catalog' %}" class="list-group-item list-group-item-action">Все категории</a>
+                {% for category in categories %}
+                    <a href="{% url 'catalog_by_category' category.id %}" 
+                       class="list-group-item list-group-item-action {% if current_category_id == category.id %}active{% endif %}">
+                        {{ category.name }}
+                    </a>
+                {% endfor %}
+            </div>
+
+            {% if subcategories %}
+            <!-- Список подкатегорий -->
+            <div class="list-group mb-4">
+                <h4>Подкатегории</h4>
+                {% for subcategory in subcategories %}
+                    <a href="{% url 'catalog_by_subcategory' current_category_id subcategory.id %}" 
+                       class="list-group-item list-group-item-action {% if current_subcategory_id == subcategory.id %}active{% endif %}">
+                        {{ subcategory.name }}
+                    </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Сортировка и результаты -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <span>Найдено товаров: {{ products.count }}</span>
+                </div>
+                <form method="get" class="ms-3">
+                    {% for key, value in request.GET.items %}
+                        {% if key != 'sort' %}
+                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                        {% endif %}
+                    {% endfor %}
+                    <select class="form-select" name="sort" onchange="this.form.submit()">
+                        <option value="" {% if not current_sort %}selected{% endif %}>Без сортировки</option>
+                        <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Цена: по возрастанию</option>
+                        <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Цена: по убыванию</option>
+                        <option value="rating_asc" {% if current_sort == 'rating_asc' %}selected{% endif %}>Рейтинг: по возрастанию</option>
+                        <option value="rating_desc" {% if current_sort == 'rating_desc' %}selected{% endif %}>Рейтинг: по убыванию</option>
+                    </select>
+                </form>
+            </div>
+
+            <div class="mt-4">
+                {% if products %}
+                <div class="row">
+                    {% for product in products %}
+                        {% include 'includes/product_card.html' %}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    Товары не найдены. Попробуйте изменить параметры фильтрации.
+                </div>
+                {% endif %}
+            </div>
         </div>
-        {% else %}
-        <p class="text-center">Товары не найдены.</p>
-        {% endif %}
     </div>
 </div>
 {% endblock %}

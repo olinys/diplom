@@ -326,13 +326,65 @@ def update_cart_item(request, product_id):
 def catalog_view(request, category_id=None, subcategory_id=None):
     categories = Category.objects.all()
     sort = request.GET.get('sort')
+    
+    # Получаем параметры фильтрации из GET-запроса
+    filters = {
+        'memory': request.GET.get('memory'),
+        'ram': request.GET.get('ram'),
+        'color': request.GET.get('color'),
+        'price_min': request.GET.get('price_min'),
+        'price_max': request.GET.get('price_max'),
+        'front_camera': request.GET.get('front_camera'),
+        'main_camera': request.GET.get('main_camera'),
+        'core_count': request.GET.get('core_count'),
+        'screen_diagonal': request.GET.get('screen_diagonal'),
+        'battery_capacity': request.GET.get('battery_capacity'),
+        'operating_system': request.GET.get('operating_system'),
+        'cpu_frequency': request.GET.get('cpu_frequency'),
+        'processor': request.GET.get('processor'),
+        'connector_type': request.GET.get('connector_type'),
+        'connection_type': request.GET.get('connection_type'),
+    }
 
+    # Базовый запрос с фильтрацией по категории/подкатегории
     if subcategory_id:
         products = Product.objects.filter(subcategory_id=subcategory_id)
     elif category_id:
         products = Product.objects.filter(category_id=category_id)
     else:
         products = Product.objects.all()
+
+    # Применяем фильтрацию по параметрам
+    if filters['memory']:
+        products = products.filter(memory_id=filters['memory'])
+    if filters['ram']:
+        products = products.filter(ram_id=filters['ram'])
+    if filters['color']:
+        products = products.filter(color_id=filters['color'])
+    if filters['price_min']:
+        products = products.filter(price__gte=filters['price_min'])
+    if filters['price_max']:
+        products = products.filter(price__lte=filters['price_max'])
+    if filters['front_camera']:
+        products = products.filter(front_camera_id=filters['front_camera'])
+    if filters['main_camera']:
+        products = products.filter(main_camera_id=filters['main_camera'])
+    if filters['core_count']:
+        products = products.filter(core_count_id=filters['core_count'])
+    if filters['screen_diagonal']:
+        products = products.filter(screen_diagonal_id=filters['screen_diagonal'])
+    if filters['battery_capacity']:
+        products = products.filter(battery_capacity_id=filters['battery_capacity'])
+    if filters['operating_system']:
+        products = products.filter(operating_system_id=filters['operating_system'])
+    if filters['cpu_frequency']:
+        products = products.filter(cpu_frequency_id=filters['cpu_frequency'])
+    if filters['processor']:
+        products = products.filter(processor_id=filters['processor'])
+    if filters['connector_type']:
+        products = products.filter(connector_type_id=filters['connector_type'])
+    if filters['connection_type']:
+        products = products.filter(connection_type_id=filters['connection_type'])
 
     # Применяем сортировку
     if sort == 'price_asc':
@@ -344,9 +396,27 @@ def catalog_view(request, category_id=None, subcategory_id=None):
     elif sort == 'rating_desc':
         products = products.order_by('-average_rating')
 
+    # Получаем подкатегории для текущей категории
     subcategories = None
     if category_id:
         subcategories = Subcategory.objects.filter(category_id=category_id)
+
+    # Получаем доступные значения для фильтров
+    filter_options = {
+        'memory': Memory.objects.all(),
+        'ram': RAM.objects.all(),
+        'color': Color.objects.all(),
+        'front_camera':Camera.objects.all(),
+        'main_camera':Camera.objects.all(),
+        'core_count':CoreCount.objects.all(),
+        'screen_diagonal':ScreenDiagonal.objects.all(),
+        'battery_capacity':BatteryCapacity.objects.all(),
+        'operating_system':OperatingSystem.objects.all(),
+        'cpu_frequency': CpuFrequency.objects.all(),
+        'processor':Processor.objects.all(),
+        'connector_type':ConnectorType.objects.all(),
+        'connection_type':ConnectionType.objects.all(),
+    }
 
     return render(request, 'accounts/catalog.html', {
         'categories': categories,
@@ -355,6 +425,8 @@ def catalog_view(request, category_id=None, subcategory_id=None):
         'current_category_id': category_id,
         'current_subcategory_id': subcategory_id,
         'current_sort': sort,
+        'filters': filters,
+        'filter_options': filter_options,
     })
 
 
@@ -364,6 +436,56 @@ def product_search(request):
     sort = request.GET.get('sort')
     category_id = request.GET.get('category')
     subcategory_id = request.GET.get('subcategory')
+
+    filters = {
+        'memory': request.GET.get('memory'),
+        'ram': request.GET.get('ram'),
+        'color': request.GET.get('color'),
+        'price_min': request.GET.get('price_min'),
+        'price_max': request.GET.get('price_max'),
+        'front_camera': request.GET.get('front_camera'),
+        'main_camera': request.GET.get('main_camera'),
+        'core_count': request.GET.get('core_count'),
+        'screen_diagonal': request.GET.get('screen_diagonal'),
+        'battery_capacity': request.GET.get('battery_capacity'),
+        'operating_system': request.GET.get('operating_system'),
+        'cpu_frequency': request.GET.get('cpu_frequency'),
+        'processor': request.GET.get('processor'),
+        'connector_type': request.GET.get('connector_type'),
+        'connection_type': request.GET.get('connection_type'),
+    }
+
+    if filters['memory']:
+        products = products.filter(memory_id=filters['memory'])
+    if filters['ram']:
+        products = products.filter(ram_id=filters['ram'])
+    if filters['color']:
+        products = products.filter(color_id=filters['color'])
+    if filters['price_min']:
+        products = products.filter(price__gte=filters['price_min'])
+    if filters['price_max']:
+        products = products.filter(price__lte=filters['price_max'])
+    if filters['front_camera']:
+        products = products.filter(front_camera_id=filters['front_camera'])
+    if filters['main_camera']:
+        products = products.filter(main_camera_id=filters['main_camera'])
+    if filters['core_count']:
+        products = products.filter(core_count_id=filters['core_count'])
+    if filters['screen_diagonal']:
+        products = products.filter(screen_diagonal_id=filters['screen_diagonal'])
+    if filters['battery_capacity']:
+        products = products.filter(battery_capacity_id=filters['battery_capacity'])
+    if filters['operating_system']:
+        products = products.filter(operating_system_id=filters['operating_system'])
+    if filters['cpu_frequency']:
+        products = products.filter(cpu_frequency_id=filters['cpu_frequency'])
+    if filters['processor']:
+        products = products.filter(processor_id=filters['processor'])
+    if filters['connector_type']:
+        products = products.filter(connector_type_id=filters['connector_type'])
+    if filters['connection_type']:
+        products = products.filter(connection_type_id=filters['connection_type'])
+
 
     results = []
     categories = Category.objects.all()
@@ -389,6 +511,23 @@ def product_search(request):
         elif sort == 'rating_desc':
             results = results.order_by('-average_rating')
 
+
+    filter_options = {
+        'memory': Memory.objects.all(),
+        'ram': RAM.objects.all(),
+        'color': Color.objects.all(),
+        'front_camera':Camera.objects.all(),
+        'main_camera':Camera.objects.all(),
+        'core_count':CoreCount.objects.all(),
+        'screen_diagonal':ScreenDiagonal.objects.all(),
+        'battery_capacity':BatteryCapacity.objects.all(),
+        'operating_system':OperatingSystem.objects.all(),
+        'cpu_frequency': CpuFrequency.objects.all(),
+        'processor':Processor.objects.all(),
+        'connector_type':ConnectorType.objects.all(),
+        'connection_type':ConnectionType.objects.all(),
+    }
+
     return render(request, 'accounts/search_results.html', {
         'query': query,
         'results': results,
@@ -397,6 +536,8 @@ def product_search(request):
         'current_subcategory': subcategory_id,
         'categories': categories,
         'subcategories': subcategories,
+        'filters': filters,
+        'filter_options': filter_options,
     })
 
 
