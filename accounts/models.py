@@ -22,7 +22,6 @@ class Category(models.Model):
     def __str__(self):
         return self.name
     
-
 class Subcategory(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="subcategories", verbose_name="Категория")
     name = models.CharField(max_length=255, verbose_name="Название подкатегории")
@@ -31,7 +30,6 @@ class Subcategory(models.Model):
         return self.name
     
 class ParameterModel(models.Model):
-    """Абстрактная модель для параметров"""
     class Meta:
         abstract = True
     
@@ -116,8 +114,6 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Категория")
     subcategory = models.ForeignKey(Subcategory, on_delete=models.SET_NULL, blank=True, null=True, verbose_name="Подкатегория")
-
-    # Параметры товара
     memory = models.ForeignKey(Memory, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Память")
     ram = models.ForeignKey(RAM, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="ОЗУ")
     core_count = models.ForeignKey(CoreCount, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Количество ядер")
@@ -131,7 +127,6 @@ class Product(models.Model):
     processor = models.ForeignKey(Processor, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Процессор")
     connector_type = models.ForeignKey(ConnectorType, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Разъем для подключения")
     connection_type = models.ForeignKey(ConnectionType, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Тип устройства")
-
     sku = models.CharField(max_length=50, unique=True, verbose_name="Артикул", blank=True)
     image = models.ImageField(upload_to="product_images/", blank=True, null=True, verbose_name="Изображение")
     description = models.TextField(blank=True, null=True, verbose_name="Описание")
@@ -181,7 +176,7 @@ class Product(models.Model):
 class Review(models.Model):
     product = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    rating = models.PositiveIntegerField(default=1)  # Рейтинг от 1 до 5
+    rating = models.PositiveIntegerField(default=1)  
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -191,7 +186,7 @@ class Review(models.Model):
     
 class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)  # Проверьте, что здесь правильно указана модель и внешний ключ
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)  
     quantity = models.PositiveIntegerField(default=1)
 
     def __str__(self):
@@ -202,7 +197,6 @@ class PickupPoint(models.Model):
     name = models.CharField(max_length=255, verbose_name="Название ПВЗ")
     address = models.CharField(max_length=255, verbose_name="Адрес ПВЗ")
 
-    # Время открытия и закрытия для каждого дня
     monday_open = models.TimeField(default="09:00:00", verbose_name="Понедельник с")
     monday_close = models.TimeField(default="12:00:00", verbose_name="Понедельник до")
 
@@ -236,9 +230,7 @@ class Order(models.Model):
         ('ready for pickup', 'Готов к выдаче'),
         ('handed over to the courier', 'Передан курьеру'),
     ]
-
-    order_number = models.CharField(max_length=20, unique=True, blank=True, null=True)  # Новый номер заказа
-
+    order_number = models.CharField(max_length=20, unique=True, blank=True, null=True)  
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     delivery_address = models.TextField()
     products = models.ManyToManyField(Product, through='OrderProduct')
@@ -254,11 +246,9 @@ class Order(models.Model):
         return f"Заказ {self.order_number or self.id} от {self.user.username}"
 
     def save(self, *args, **kwargs):
-        # Шифрование
         self.card_number = self.encrypt_card(self.card_number)
         self.cvv = self.encrypt_cvv(self.cvv)
 
-        # Генерация номера заказа при первом сохранении
         if not self.order_number:
             last_order = Order.objects.order_by('-id').first()
             next_number = last_order.id + 1 if last_order else 1
@@ -277,7 +267,7 @@ class Order(models.Model):
 class OrderProduct(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()  # Количество товара
+    quantity = models.PositiveIntegerField() 
 
     def __str__(self):
         return f"{self.product.name} ({self.quantity})"

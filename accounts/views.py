@@ -85,8 +85,7 @@ def add_product(request):
         product_form = ProductForm(request.POST, request.FILES)
         if product_form.is_valid():
             product = product_form.save(commit=False)
-            
-            # Обрабатываем параметры
+
             param_fields = {
                 'memory': Memory,
                 'ram': RAM,
@@ -106,9 +105,9 @@ def add_product(request):
             for field, model in param_fields.items():
                 value = request.POST.get(field)
                 if value:
-                    if value.isdigit():  # Если передается ID существующего объекта
+                    if value.isdigit():  
                         obj = model.objects.get(id=value)
-                    else:  # Если передается новое значение
+                    else:
                         field_name = 'name' if hasattr(model(), 'name') else 'value'
                         obj, created = model.objects.get_or_create(**{field_name: value})
                     setattr(product, field, obj)
@@ -326,8 +325,7 @@ def update_cart_item(request, product_id):
 def catalog_view(request, category_id=None, subcategory_id=None):
     categories = Category.objects.all()
     sort = request.GET.get('sort')
-    
-    # Получаем параметры фильтрации из GET-запроса
+
     filters = {
         'memory': request.GET.get('memory'),
         'ram': request.GET.get('ram'),
@@ -346,7 +344,6 @@ def catalog_view(request, category_id=None, subcategory_id=None):
         'connection_type': request.GET.get('connection_type'),
     }
 
-    # Базовый запрос с фильтрацией по категории/подкатегории
     if subcategory_id:
         products = Product.objects.filter(subcategory_id=subcategory_id)
     elif category_id:
@@ -354,7 +351,6 @@ def catalog_view(request, category_id=None, subcategory_id=None):
     else:
         products = Product.objects.all()
 
-    # Применяем фильтрацию по параметрам
     if filters['memory']:
         products = products.filter(memory_id=filters['memory'])
     if filters['ram']:
@@ -386,7 +382,6 @@ def catalog_view(request, category_id=None, subcategory_id=None):
     if filters['connection_type']:
         products = products.filter(connection_type_id=filters['connection_type'])
 
-    # Применяем сортировку
     if sort == 'price_asc':
         products = products.order_by('price')
     elif sort == 'price_desc':
@@ -396,12 +391,10 @@ def catalog_view(request, category_id=None, subcategory_id=None):
     elif sort == 'rating_desc':
         products = products.order_by('-average_rating')
 
-    # Получаем подкатегории для текущей категории
     subcategories = None
     if category_id:
         subcategories = Subcategory.objects.filter(category_id=category_id)
 
-    # Получаем доступные значения для фильтров
     filter_options = {
         'memory': Memory.objects.all(),
         'ram': RAM.objects.all(),
@@ -417,6 +410,7 @@ def catalog_view(request, category_id=None, subcategory_id=None):
         'connector_type':ConnectorType.objects.all(),
         'connection_type':ConnectionType.objects.all(),
     }
+    
 
     return render(request, 'accounts/catalog.html', {
         'categories': categories,
@@ -595,8 +589,6 @@ def delete_pickup_point(request, pk):
     pickup_point.delete()
     return redirect('add_pickup_point')
 
-
-
 # ПРЕДСТВЛЕНИЕ ТОВАРА
 def product_detail(request, product_id):
     product = get_object_or_404(
@@ -612,7 +604,6 @@ def product_detail(request, product_id):
         pk=product_id
     )
 
-    # Пересчитываем средний рейтинг
     reviews = product.reviews.all()
     if reviews.exists():
         average_rating = reviews.aggregate(Avg('rating'))['rating__avg']
@@ -621,19 +612,16 @@ def product_detail(request, product_id):
 
     can_leave_review = False
     if request.user.is_authenticated:
-        # Проверка, покупал ли пользователь товар
         has_order = Order.objects.filter(
             user=request.user,
             status='ready for pickup',
             orderproduct__product=product
         ).exists()
 
-        # Проверка, оставлял ли уже отзыв
         has_reviewed = product.reviews.filter(user=request.user).exists()
 
         can_leave_review = has_order and not has_reviewed
 
-        # Обработка отзыва
         if request.method == 'POST' and can_leave_review:
             rating = int(request.POST.get('rating'))
             comment = request.POST.get('comment', '')
@@ -656,15 +644,12 @@ def product_detail(request, product_id):
 def checkout_view(request):
     user = request.user
     user_profile = get_object_or_404(UserProfile, user=user)
-
     product_id = request.GET.get('product_id')
     cart_items = []
     total_price = 0
 
     if product_id:
         product = get_object_or_404(Product, id=product_id)
-
-        # Добавляем товар в корзину пользователя, если его там нет
         cart_item, created = Cart.objects.get_or_create(user=user, product=product)
         if created:
             cart_item.quantity = 1
@@ -676,19 +661,16 @@ def checkout_view(request):
         cart_items = Cart.objects.filter(user=user)
         total_price = sum(item.product.price * item.quantity for item in cart_items)
 
-    # Получаем пункты самовывоза
     pickup_points = PickupPoint.objects.all()
 
     if request.method == 'POST':
         delivery_method = request.POST.get('delivery_method')
         pvz_point_id = request.POST.get('pvz_point')
-
         card_number = request.POST.get('card_number')
         expiry_date = request.POST.get('expiry_date')
         cardholder_name = request.POST.get('cardholder_name')
         cvv = request.POST.get('cvv')
 
-        # Определяем адрес доставки в зависимости от выбранного способа
         if delivery_method == 'pickup':
             delivery_address = 'г. Минск, ул. Ленина, д. 1'
         elif delivery_method == 'pvz':
@@ -704,7 +686,6 @@ def checkout_view(request):
             messages.error(request, "Пожалуйста, выберите способ доставки.")
             return redirect('checkout')
 
-        # Создаем заказ
         order = Order.objects.create(
             user=user,
             delivery_address=delivery_address,
@@ -715,14 +696,12 @@ def checkout_view(request):
             cvv=cvv,
         )
 
-        # Добавляем товары в заказ и уменьшаем количество на складе
         for item in cart_items:
             OrderProduct.objects.create(order=order, product=item.product, quantity=item.quantity)
             item.product.stock_quantity -= item.quantity
             item.product.save()
             item.delete()
 
-        # Уведомление об успешном оформлении заказа
         messages.success(request, "Заказ успешно оформлен!")
         return redirect('home')
 
@@ -738,13 +717,11 @@ def checkout_view(request):
 def view_orders(request):
     orders = Order.objects.prefetch_related('orderproduct_set__product').select_related('user')
 
-    # Извлечение возможных фильтров
     selected_user = request.GET.get('user', 'all')
     selected_status = request.GET.get('status', 'all')
     selected_address = request.GET.get('address', 'all')
     selected_product = request.GET.get('product', 'all')
 
-    # Фильтрация
     if selected_user != 'all':
         orders = orders.filter(user__username=selected_user)
 
@@ -757,7 +734,6 @@ def view_orders(request):
     if selected_product != 'all':
         orders = orders.filter(orderproduct__product__name=selected_product)
 
-    # Данные для фильтров (уникальные значения только из текущих заказов)
     users = orders.values_list('user__username', flat=True).distinct()
     statuses = Order.STATUS_CHOICES
     addresses = orders.values_list('delivery_address', flat=True).distinct()
@@ -854,20 +830,15 @@ def privacy_policy(request):
 # ДОСТАВКА
 @login_required
 def delivery_view(request):
-    # Фильтруем только заказы текущего пользователя
     all_orders = Order.objects.filter(user=request.user)
 
-    # Исключаем заказы со статусом "Готов к выдаче"
     all_orders = all_orders.exclude(status='ready for pickup')
-
     all_products = Product.objects.filter(orderproduct__order__in=all_orders).distinct()
     all_statuses = Order.STATUS_CHOICES
     all_addresses = all_orders.values_list('delivery_address', flat=True).distinct()
-
     selected_product = request.GET.get('product', 'all')
     selected_status = request.GET.get('status', 'all')
     selected_address = request.GET.get('address', 'all')
-
     filtered_orders = all_orders
 
     if selected_product != 'all':
@@ -892,17 +863,14 @@ def delivery_view(request):
 # УВЕДОМЛЕНИЯ
 @login_required
 def notifications_view(request):
-    # Обрабатываем удаление уведомлений
     if request.method == 'POST':
         notification_id = request.POST.get('delete')
         if notification_id:
             notification = Notification.objects.get(id=notification_id, user=request.user)
             notification.delete()
 
-    # Загружаем уведомления пользователя
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
 
-    # Если уведомление прочитано, обновляем его статус
     for notif in notifications:
         if not notif.is_read:
             notif.is_read = True

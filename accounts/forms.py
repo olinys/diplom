@@ -1,4 +1,5 @@
 from django import forms
+from datetime import datetime
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from .models import UserProfile, Product, Category, PickupPoint, Subcategory, Camera, Memory, RAM, CoreCount, Color, ScreenDiagonal, BatteryCapacity, OperatingSystem, Processor, ConnectionType, ConnectorType, CpuFrequency
@@ -25,9 +26,6 @@ class UserProfileForm(forms.ModelForm):
         fields = ['first_name', 'last_name', 'phone_number', 'birth_date', 'gender', 'delivery_address', 'profile_picture']
 
 
-from django import forms
-from .models import Product, Subcategory
-
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
@@ -45,24 +43,20 @@ class ProductForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Список полей характеристик, которые должны быть необязательными
         parameter_fields = [
             'memory', 'ram', 'core_count', 'color', 'screen_diagonal',
             'battery_capacity', 'operating_system', 'main_camera', 'front_camera',
             'cpu_frequency', 'processor', 'connector_type', 'connection_type'
         ]
         
-        # Делаем все поля характеристик необязательными
         for field in parameter_fields:
             self.fields[field].required = False
-            self.fields[field].empty_label = "Не указано"  # Добавляем пустой вариант
-        
-        # Поля, которые остаются обязательными
+            self.fields[field].empty_label = "Не указано" 
+
         required_fields = ['name', 'price', 'category', 'stock_quantity']
         for field in required_fields:
             self.fields[field].required = True
         
-        # Динамическая загрузка подкатегорий
         self.fields['subcategory'].queryset = Subcategory.objects.none()
 
         if 'category' in self.data:
@@ -78,7 +72,6 @@ class ProductForm(forms.ModelForm):
                 category=self.instance.category
             ).order_by('name')
         
-        # Опционально: добавляем подсказки для необязательных полей
         for field in parameter_fields:
             self.fields[field].help_text = "Необязательное поле"
 
@@ -90,7 +83,7 @@ class CategoryForm(forms.ModelForm):
 class SubcategoryForm(forms.ModelForm):
     class Meta:
         model = Subcategory
-        fields = ['name', 'category']  # Поля для названия подкатегории и выбора категории
+        fields = ['name', 'category'] 
 
     category = forms.ModelChoiceField(
         queryset=Category.objects.all(),
@@ -98,11 +91,6 @@ class SubcategoryForm(forms.ModelForm):
         empty_label="Выберите категорию",
         widget=forms.Select(attrs={"class": "form-control"})
     )
-
-
-from django import forms
-from .models import PickupPoint
-from datetime import datetime
 
 class PickupPointForm(forms.ModelForm):
     class Meta:
@@ -115,7 +103,6 @@ class PickupPointForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Преобразуем время в строку в формате HH:MM, если время в строковом формате
         for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
             open_time_field = f'{day}_open'
             close_time_field = f'{day}_close'
@@ -124,16 +111,13 @@ class PickupPointForm(forms.ModelForm):
                 open_time = self.instance.__getattribute__(open_time_field)
                 close_time = self.instance.__getattribute__(close_time_field)
                 
-                # Преобразуем строку в объект времени, если это необходимо
                 if isinstance(open_time, str):
                     open_time = datetime.strptime(open_time, '%H:%M:%S').time()
                 if isinstance(close_time, str):
                     close_time = datetime.strptime(close_time, '%H:%M:%S').time()
-                
-                # Преобразуем в строку времени в формате HH:MM
+
                 self.fields[f'{day}_open'].initial = open_time.strftime('%H:%M')
                 self.fields[f'{day}_close'].initial = close_time.strftime('%H:%M')
             else:
-                # Если экземпляр не существует, устанавливаем значение по умолчанию
                 self.fields[f'{day}_open'].initial = '09:00'
                 self.fields[f'{day}_close'].initial = '21:00'

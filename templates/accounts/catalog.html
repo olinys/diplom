@@ -273,6 +273,15 @@
                 </form>
             </div>
 
+            <!-- Кнопка сравнения (появляется только при примененных фильтрах) -->
+            {% if request.GET %}
+            <div class="mb-4">
+                <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#comparisonModal">
+                    Сравнительная таблица
+                </button>
+            </div>
+            {% endif %}
+
             <!-- Список товаров -->
             <div class="row">
                 {% for product in products %}
@@ -317,6 +326,183 @@
                         <p>Нет товаров, соответствующих фильтрам.</p>
                     </div>
                 {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для сравнения товаров -->
+<div class="modal fade" id="comparisonModal" tabindex="-1" aria-labelledby="comparisonModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="comparisonModalLabel">Сравнительная таблица</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if products %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Характеристика</th>
+                                {% for product in products %}
+                                <th>{{ product.name }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Price (min) -->
+                            {% with min_price=products|dictsort:"price"|first %}
+                            <tr>
+                                <td>Цена</td>
+                                {% for product in products %}
+                                <td {% if product.price and product.price == min_price.price %}class="bg-success text-white"{% endif %}>
+                                    {{ product.price|default:"Не указано" }} BYN
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endwith %}
+                            
+                            <tr>
+                                <td>Категория</td>
+                                {% for product in products %}
+                                <td>{{ product.category.name|default:"Не указано" }}</td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Memory (max) -->
+                            {% with max_memory=products|dictsortreversed:"memory.value"|first %}
+                            <tr>
+                                <td>Память</td>
+                                {% for product in products %}
+                                <td {% if product.memory.value and max_memory.memory.value and product.memory.value == max_memory.memory.value %}class="bg-success text-white"{% endif %}>
+                                    {% if product.memory.value %}{{ product.memory.value }} GB{% else %}Не указано{% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endwith %}
+                            
+                            <!-- RAM (max) -->
+                            {% with max_ram=products|dictsortreversed:"ram.value"|first %}
+                            <tr>
+                                <td>ОЗУ</td>
+                                {% for product in products %}
+                                <td {% if product.ram.value and max_ram.ram.value and product.ram.value == max_ram.ram.value %}class="bg-success text-white"{% endif %}>
+                                    {% if product.ram.value %}{{ product.ram.value }} GB{% else %}Не указано{% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endwith %}
+                            
+                            <tr>
+                                <td>Цвет</td>
+                                {% for product in products %}
+                                <td>{{ product.color.name|default:"Не указано" }}</td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Front Camera (max) -->
+                            {% with max_front_camera=products|dictsortreversed:"front_camera.value"|first %}
+                            <tr>
+                                <td>Фронтальная камера</td>
+                                {% for product in products %}
+                                <td {% if product.front_camera.value and max_front_camera.front_camera.value and product.front_camera.value == max_front_camera.front_camera.value %}class="bg-success text-white"{% endif %}>
+                                    {% if product.front_camera.value %}{{ product.front_camera.value }} Мп{% else %}Не указано{% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endwith %}
+                            
+                            <!-- Main Camera (max) -->
+                            {% with max_main_camera=products|dictsortreversed:"main_camera.value"|first %}
+                            <tr>
+                                <td>Основная камера</td>
+                                {% for product in products %}
+                                <td {% if product.main_camera.value and max_main_camera.main_camera.value and product.main_camera.value == max_main_camera.main_camera.value %}class="bg-success text-white"{% endif %}>
+                                    {% if product.main_camera.value %}{{ product.main_camera.value }} Мп{% else %}Не указано{% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endwith %}
+                            
+                            <!-- Core Count (max) -->
+                            {% with max_core_count=products|dictsortreversed:"core_count.value"|first %}
+                            <tr>
+                                <td>Количество ядер</td>
+                                {% for product in products %}
+                                <td {% if product.core_count.value and max_core_count.core_count.value and product.core_count.value == max_core_count.core_count.value %}class="bg-success text-white"{% endif %}>
+                                    {% if product.core_count.value %}{{ product.core_count.value }}{% else %}Не указано{% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endwith %}
+                            
+                            <!-- CPU Frequency (max) -->
+                            {% with max_cpu_frequency=products|dictsortreversed:"cpu_frequency.name"|first %}
+                            <tr>
+                                <td>Тактовая частота процессора</td>
+                                {% for product in products %}
+                                <td {% if product.cpu_frequency.name and max_cpu_frequency.cpu_frequency.name and product.cpu_frequency.name == max_cpu_frequency.cpu_frequency.name %}class="bg-success text-white"{% endif %}>
+                                    {% if product.cpu_frequency.name %}{{ product.cpu_frequency.name }} Гц{% else %}Не указано{% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endwith %}
+                            
+                            <tr>
+                                <td>Диагональ экрана</td>
+                                {% for product in products %}
+                                <td>{% if product.screen_diagonal.value %}{{ product.screen_diagonal.value }}"{% else %}Не указано{% endif %}</td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Battery Capacity (max) -->
+                            {% with max_battery=products|dictsortreversed:"battery_capacity.value"|first %}
+                            <tr>
+                                <td>Емкость аккумулятора</td>
+                                {% for product in products %}
+                                <td {% if product.battery_capacity.value and max_battery.battery_capacity.value and product.battery_capacity.value == max_battery.battery_capacity.value %}class="bg-success text-white"{% endif %}>
+                                    {% if product.battery_capacity.value %}{{ product.battery_capacity.value }} мАч{% else %}Не указано{% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endwith %}
+                            
+                            <tr>
+                                <td>Операционная система</td>
+                                {% for product in products %}
+                                <td>{{ product.operating_system.name|default:"Не указано" }}</td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <tr>
+                                <td>Процессор</td>
+                                {% for product in products %}
+                                <td>{{ product.processor.name|default:"Не указано" }}</td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Rating (max) -->
+                            {% with max_rating=products|dictsortreversed:"average_rating"|first %}
+                            <tr>
+                                <td>Рейтинг</td>
+                                {% for product in products %}
+                                <td {% if product.average_rating is not None and max_rating.average_rating is not None and product.average_rating == max_rating.average_rating %}class="bg-success text-white"{% endif %}>
+                                    {% if product.average_rating is not None %}{{ product.average_rating|floatformat:2 }}{% else %}Не указано{% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endwith %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>Нет товаров для сравнения</p>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
             </div>
         </div>
     </div>

@@ -25,13 +25,6 @@ admin.site.register(OperatingSystem)
 admin.site.register(ScreenDiagonal)
 
 
-
-
-
-
-
-
-
 # Логгер для отслеживания создания уведомлений
 logger = logging.getLogger(__name__)
 
